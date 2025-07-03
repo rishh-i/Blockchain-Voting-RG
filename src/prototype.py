@@ -10,7 +10,7 @@ from threading import Lock
 class HashTable:
 
     def __init__(self, size=100):
-        # initialises a hash table with a empty buckets
+        # initialises a hash table with an empty buckets
         # each slot is a list to handle collisions via chaining
         self.size = size
         self.table = [[] for _ in range(size)]
