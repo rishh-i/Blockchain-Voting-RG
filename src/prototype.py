@@ -159,56 +159,56 @@ class Blockchain:
                 self.__add_pending_votes()
 
 
-        def __multiple_votes(self, voter_id):
-            # checks if a voter has already voted through the hash table
-            return self.vote_registry.get(f"{voter_id}") is not None
+    def __multiple_votes(self, voter_id):
+        # checks if a voter has already voted through the hash table
+        return self.vote_registry.get(f"{voter_id}") is not None
 
-        def __add_pending_votes(self):
-            # creates a new block with the pending votes and adds it to the blockchain
+    def __add_pending_votes(self):
+        # creates a new block with the pending votes and adds it to the blockchain
 
-            if not self.pending_votes:
-                return # if there are no pending votes, do nothing, although this is validated in the add_vote method
+        if not self.pending_votes:
+            return # if there are no pending votes, do nothing, although this is validated in the add_vote method
 
-            new_index = len(self.chain)
-            previous_hash = self.get_latest_block().hash
-            new_block = Block(new_index, self.pending_votes.copy(), previous_hash)
-            new_block.mine_block(self.mining_difficulty)
-            self.chain.append(new_block)
-            self.pending_votes = []  # clear pending votes after adding to the blockchain
+        new_index = len(self.chain)
+        previous_hash = self.get_latest_block().hash
+        new_block = Block(new_index, self.pending_votes.copy(), previous_hash)
+        new_block.mine_block(self.mining_difficulty)
+        self.chain.append(new_block)
+        self.pending_votes = []  # clear pending votes after adding to the blockchain
 
-        def __add_remaining_votes(self):
-            # called when current pending votes need to be added to the blockchain regardless of the block size
+    def __add_remaining_votes(self):
+        # called when current pending votes need to be added to the blockchain regardless of the block size
 
-            with self.chain_lock:
-                if self.pending_votes:
-                    self.__add_pending_votes()
+        with self.chain_lock:
+            if self.pending_votes:
+                self.__add_pending_votes()
 
-        def validate_chain(self):
+    def validate_chain(self):
 
-            for i in range(1, len(self.chain)):
-                current_block = self.chain[i]
-                previous_block = self.chain[i - 1]
+        for i in range(1, len(self.chain)):
+            current_block = self.chain[i]
+            previous_block = self.chain[i - 1]
 
-                if not current_block.is_valid():
+            if not current_block.is_valid():
+                return False
+
+            if current_block.previous_hash != previous_block.hash:
+                return False
+
+            for vote in current_block.votes: # validates all votes in block
+                if not vote.is_valid():
                     return False
+        return True
 
-                if current_block.previous_hash != previous_block.hash:
-                    return False
+    def get_results(self):
+        results = {}
+        for block in self.chain:
+            for vote in block.votes:
+                candidate_id = vote.candidate_id
+                results[candidate_id] = results.get(candidate_id, 0) + 1 # increments the vote count for the candidate, or starts at 0 if candidate_id not found
+        return results
 
-                for vote in current_block.votes: # validates all votes in block
-                    if not vote.is_valid():
-                        return False
-            return True
-
-        def get_results(self):
-            results = {}
-            for block in self.chain:
-                for vote in block.votes:
-                    candidate_id = vote.candidate_id
-                    results[candidate_id] = results.get(candidate_id, 0) + 1 # increments the vote count for the candidate, or starts at 0 if candidate_id not found
-            return results
-
-        def get_blockchain(self):
-            # returns entire blockchain as a list of dictionaries
-            return [block.to_dict() for block in self.chain]
+    def get_blockchain(self):
+        # returns entire blockchain as a list of dictionaries
+        return [block.to_dict() for block in self.chain]
 
