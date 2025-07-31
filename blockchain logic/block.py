@@ -5,7 +5,7 @@ import json
 class Block:
     # Represents a single block in the blockchain
 
-    def __init__(self, index, votes, previous_hash, timestamp = None):
+    def __init__(self, index, votes, previous_hash):
         self.index = index
         self.votes = votes
         self.previous_hash = previous_hash

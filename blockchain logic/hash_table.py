@@ -1,10 +1,15 @@
 class HashTable:
 
+    """
+    Key: string (voter_id_election_id)
+    Value: Vote object
+    """
+
     def __init__(self, size=100):
         # initialises a hash table with an empty buckets
         # each slot is a list to handle collisions via chaining
         self.size = size
-        self.table = [[] for _ in range(size)]
+        self.table = [[] for _ in range(self.size)]
 
     def __hash(self, key):
         return hash(key) % self.size # modulus keeps value within bounds of the table size
