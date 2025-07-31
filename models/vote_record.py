@@ -1,0 +1,16 @@
+from app import db
+from datetime import datetime, timezone
+
+"""
+This is a database record to log that a user has voted in an election.
+It does not store the actual vote as that is in the blockchain.
+It is used to prevent double voting.
+"""
+
+class VoteRecord(db.Model):
+    __tablename__ = "vote_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    voter_id = db.Column(db.String(50), nullable=False)
+    election_id = db.Column(db.Integer, db.ForeignKey("elections.id"), nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
