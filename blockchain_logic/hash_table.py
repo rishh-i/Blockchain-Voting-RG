@@ -14,6 +14,19 @@ class HashTable:
     def __hash(self, key):
         return hash(key) % self.size # modulus keeps value within bounds of the table size
 
+    def __contains__(self, key):
+        return self.get(key) is not None
+
+    def __setitem__(self, key, value):
+        # allows using the hash table like a dictionary with bracket notation
+        self.insert(key, value)
+
+    def __getitem__(self, key):
+        value = self.get(key)
+        if value is None:
+            raise KeyError(f"Key {key} not found in hash table.")
+        return value
+
     def insert(self, key, value):
         # adds or updates a key-value pair in the hash table which is a vote in this case
         index = self.__hash(key)
