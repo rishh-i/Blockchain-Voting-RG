@@ -1,10 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Create Election{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white text-center">
+                <h2 class="mb-0">➕ Create New Election</h2>
+                <p class="mb-0 mt-2 opacity-75">Set up a new democratic election</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-4">
+                        <label for="name" class="form-label fw-bold">
+                            <span class="text-danger">*</span> Election Name
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name" 
+                               placeholder="e.g., Presidential Election 2024" required>
+                        <div class="form-text">Choose a clear, descriptive name for this election</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="start_date" class="form-label fw-bold">
+                                    <span class="text-danger">*</span> Start Date & Time
+                                </label>
+                                <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+                                <div class="form-text">When voting should begin (UTC time)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="end_date" class="form-label fw-bold">
+                                    End Date & Time <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input type="datetime-local" class="form-control" id="end_date" name="end_date">
+                                <div class="form-text">When voting should end (leave blank for no end date)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">ℹ️ Important Notes</h6>
+                        <ul class="mb-0">
+                            <li>All times are in UTC timezone</li>
+                            <li>You can add candidates after creating the election</li>
+                            <li>Election details cannot be modified once created</li>
+                            <li>Votes will be securely recorded on the blockchain</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-secondary btn-lg">
+                            ← Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            ✅ Create Election
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">📋 Next Steps</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">After creating the election:</h6>
+                        <ol class="small">
+                            <li>Add candidates to the election</li>
+                            <li>Review election settings</li>
+                            <li>Wait for the start time</li>
+                            <li>Monitor voting progress</li>
+                            <li>View results in real-time</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">🔒 Security Features:</h6>
+                        <ul class="small">
+                            <li>Immutable blockchain recording</li>
+                            <li>Cryptographic vote verification</li>
+                            <li>Transparent audit trail</li>
+                            <li>Duplicate vote prevention</li>
+                            <li>Real-time result updates</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control-lg {
+    border-radius: 10px;
+}
+
+.card {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to current date/time
+    const now = new Date();
+    const offsetTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    const currentDateTime = offsetTime.toISOString().slice(0, 16);
+    
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    startDateInput.min = currentDateTime;
+    endDateInput.min = currentDateTime;
+    
+    // Update end date minimum when start date changes
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = this.value;
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}

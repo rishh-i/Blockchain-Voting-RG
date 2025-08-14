@@ -1,10 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Add Candidate - {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="mb-0">👤 Add Candidate</h2>
+                <p class="mb-0 mt-2 opacity-75">{{ election.name }}</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-4">
+                        <label for="name" class="form-label fw-bold">
+                            <span class="text-danger">*</span> Candidate Name
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name" 
+                               placeholder="e.g., John Smith" required>
+                        <div class="form-text">Enter the full name of the candidate</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="party" class="form-label fw-bold">
+                            Political Party <span class="text-muted">(Optional)</span>
+                        </label>
+                        <input type="text" class="form-control" id="party" name="party" 
+                               placeholder="e.g., Democratic Party, Independent, etc.">
+                        <div class="form-text">Party affiliation or leave blank for independent candidates</div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">ℹ️ Candidate Information</h6>
+                        <ul class="mb-0">
+                            <li>Candidate name is required and cannot be changed later</li>
+                            <li>Party affiliation is optional</li>
+                            <li>You can add multiple candidates to this election</li>
+                            <li>Candidates will appear in the order they are added</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-secondary btn-lg">
+                            ← Back to Elections
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            ✅ Add Candidate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Election Info -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">📋 Election Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Election:</strong> {{ election.name }}<br>
+                        <strong>Start Date:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}<br>
+                        {% if election.end_date %}
+                            <strong>End Date:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                        {% else %}
+                            <strong>End Date:</strong> <span class="text-muted">No end date set</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Current Candidates:</strong> {{ election.candidates|length }}<br>
+                        {% if election.candidates %}
+                            <div class="mt-2">
+                                {% for candidate in election.candidates %}
+                                    <span class="badge bg-secondary me-1 mb-1">
+                                        {{ candidate.name }}
+                                        {% if candidate.party %}({{ candidate.party }}){% endif %}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">No candidates added yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">👁️ Candidate Preview</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">This is how the candidate will appear to voters:</p>
+                <div class="card border-primary" style="max-width: 300px;">
+                    <div class="card-body text-center">
+                        <div class="form-check d-flex flex-column align-items-center">
+                            <input class="form-check-input" type="radio" disabled style="transform: scale(1.5); margin-bottom: 10px;">
+                            <div class="candidate-info">
+                                <h5 class="card-title mb-2" id="preview-name">Candidate Name</h5>
+                                <p class="card-text text-muted" id="preview-party" style="display: none;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control-lg {
+    border-radius: 10px;
+}
+
+.card {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('name');
+    const partyInput = document.getElementById('party');
+    const previewName = document.getElementById('preview-name');
+    const previewParty = document.getElementById('preview-party');
+    
+    function updatePreview() {
+        const name = nameInput.value.trim() || 'Candidate Name';
+        const party = partyInput.value.trim();
+        
+        previewName.textContent = name;
+        
+        if (party) {
+            previewParty.textContent = party;
+            previewParty.style.display = 'block';
+        } else {
+            previewParty.style.display = 'none';
+        }
+    }
+    
+    nameInput.addEventListener('input', updatePreview);
+    partyInput.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

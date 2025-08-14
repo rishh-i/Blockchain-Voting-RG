@@ -1,10 +1,169 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Admin - Elections Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">⚙️ Elections Management</h1>
+            <a href="{{ url_for('voting.create_election') }}" class="btn btn-success btn-lg">
+                ➕ Create New Election
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">🗳️ All Elections</h4>
+            </div>
+            <div class="card-body">
+                {% if elections %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Election Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Candidates</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for election in elections %}
+                                <tr>
+                                    <td class="fw-bold">#{{ election.id }}</td>
+                                    <td>{{ election.name }}</td>
+                                    <td>{{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                                    <td>
+                                        {% if election.end_date %}
+                                            {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                        {% else %}
+                                            <span class="text-muted">No end date</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set now = moment().utc() if moment is defined else None %}
+                                        {% if now and election.start_date > now %}
+                                            <span class="badge bg-warning">Scheduled</span>
+                                        {% elif now and election.end_date and election.end_date < now %}
+                                            <span class="badge bg-secondary">Ended</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ election.candidates|length }} candidates</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('voting.add_candidate', election_id=election.id) }}"
+                                               class="btn btn-sm btn-outline-primary" title="Add Candidate">
+                                                👤 Add Candidate
+                                            </a>
+                                            <a href="{{ url_for('voting.results', election_id=election.id) }}"
+                                               class="btn btn-sm btn-outline-success" title="View Results">
+                                                📊 Results
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="display-1 text-muted">🗳️</div>
+                        <h4 class="text-muted">No elections created yet</h4>
+                        <p class="text-muted">Create your first election to get started.</p>
+                        <a href="{{ url_for('voting.create_election') }}" class="btn btn-success btn-lg">
+                            ➕ Create First Election
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if elections %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ elections|length }}</h3>
+                <p class="mb-0">Total Elections</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 id="active-elections">{{ elections|length }}</h3>
+                <p class="mb-0">Active Elections</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                {% set total_candidates = 0 %}
+                {% for election in elections %}
+                    {% set total_candidates = total_candidates + election.candidates|length %}
+                {% endfor %}
+                <h3>{{ total_candidates }}</h3>
+                <p class="mb-0">Total Candidates</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📋 Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('voting.create_election') }}" class="btn btn-success">
+                                ➕ Create New Election
+                            </a>
+                            <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
+                                🔗 View Blockchain Explorer
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info mb-0">
+                            <h6 class="alert-heading">💡 Admin Tips</h6>
+                            <ul class="mb-0 small">
+                                <li>Add candidates before the election starts</li>
+                                <li>Monitor results in real-time</li>
+                                <li>All votes are immutably recorded on blockchain</li>
+                                <li>Election data cannot be modified once created</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('voting.dashboard') }}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+{% endblock %}

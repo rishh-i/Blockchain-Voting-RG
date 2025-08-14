@@ -1,10 +1,306 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">🔗 Blockchain Explorer</h2>
+                <p class="mb-0 mt-2 opacity-75">Explore the immutable voting blockchain</p>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h4 class="card-title" id="chain-length">-</h4>
+                                <p class="card-text">Total Blocks</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4 class="card-title" id="chain-valid">-</h4>
+                                <p class="card-text">Chain Status</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4 class="card-title" id="total-votes">-</h4>
+                                <p class="card-text">Total Votes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>📦 Blockchain Blocks</h4>
+                    <button class="btn btn-outline-primary" onclick="loadBlockchain()">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div id="loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading blockchain data...</p>
+                </div>
+
+                <div id="blockchain-container" style="display: none;">
+                    <div id="blocks-container"></div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('voting.dashboard') }}" class="btn btn-secondary">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Block Detail Modal -->
+<div class="modal fade" id="blockModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="blockModalTitle">Block Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="blockDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.block-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+
+.block-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.genesis-block {
+    border-left-color: #28a745;
+    background: linear-gradient(45deg, #f8fff9, #ffffff);
+}
+
+.vote-badge {
+    font-size: 0.8rem;
+    margin: 2px;
+}
+
+.hash-display {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBlockchain();
+});
+
+async function loadBlockchain() {
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('blockchain-container');
+
+    loading.style.display = 'block';
+    container.style.display = 'none';
+
+    try {
+        const response = await fetch('/blockchain/api/chain');
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        displayBlockchainStats(data);
+        displayBlocks(data.chain);
+
+        loading.style.display = 'none';
+        container.style.display = 'block';
+
+    } catch (error) {
+        console.error('Error loading blockchain:', error);
+        loading.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error Loading Blockchain</h5>
+                <p>${error.message}</p>
+                <button class="btn btn-outline-danger" onclick="loadBlockchain()">Try Again</button>
+            </div>
+        `;
+    }
+}
+
+function displayBlockchainStats(data) {
+    document.getElementById('chain-length').textContent = data.length;
+    document.getElementById('chain-valid').textContent = data.is_valid ? 'Valid ✅' : 'Invalid ❌';
+
+    // Count total votes
+    let totalVotes = 0;
+    data.chain.forEach(block => {
+        totalVotes += block.votes.length;
+    });
+    document.getElementById('total-votes').textContent = totalVotes;
+}
+
+function displayBlocks(blocks) {
+    const container = document.getElementById('blocks-container');
+    container.innerHTML = '';
+
+    blocks.forEach((block, index) => {
+        const blockCard = createBlockCard(block, index);
+        container.appendChild(blockCard);
+    });
+}
+
+function createBlockCard(block, index) {
+    const isGenesis = block.index === 0;
+    const blockDiv = document.createElement('div');
+    blockDiv.className = 'col-12 mb-3';
+
+    const votesHtml = block.votes.length > 0 ?
+        block.votes.map(vote =>
+            `<span class="badge bg-primary vote-badge">Vote: ${vote.voter_id} → Candidate ${vote.candidate_id}</span>`
+        ).join(' ') :
+        '<span class="text-muted">No votes in this block</span>';
+
+    blockDiv.innerHTML = `
+        <div class="card block-card ${isGenesis ? 'genesis-block' : ''}" onclick="showBlockDetails(${block.index})">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="card-title">
+                            ${isGenesis ? '🌱 Genesis Block' : '📦 Block'} #${block.index}
+                            ${isGenesis ? '<span class="badge bg-success ms-2">Genesis</span>' : ''}
+                        </h5>
+                        <p class="card-text">
+                            <strong>Votes:</strong> ${block.votes.length}<br>
+                            <strong>Timestamp:</strong> ${new Date(block.timestamp * 1000).toLocaleString()}<br>
+                            <strong>Nonce:</strong> ${block.nonce}
+                        </p>
+                        <div class="votes-container">
+                            ${votesHtml}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-end">
+                            <small class="text-muted">Hash:</small>
+                            <div class="hash-display">
+                                ${block.hash.substring(0, 16)}...
+                            </div>
+                            <small class="text-muted mt-2 d-block">Previous Hash:</small>
+                            <div class="hash-display">
+                                ${block.previous_hash.substring(0, 16)}...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return blockDiv;
+}
+
+async function showBlockDetails(blockIndex) {
+    try {
+        const response = await fetch(`/blockchain/api/block/${blockIndex}`);
+        const block = await response.json();
+
+        if (block.error) {
+            throw new Error(block.error);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('blockModal'));
+        document.getElementById('blockModalTitle').textContent = `Block #${block.index} Details`;
+
+        const detailsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Block Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Index:</strong></td><td>${block.index}</td></tr>
+                        <tr><td><strong>Timestamp:</strong></td><td>${new Date(block.timestamp * 1000).toLocaleString()}</td></tr>
+                        <tr><td><strong>Nonce:</strong></td><td>${block.nonce}</td></tr>
+                        <tr><td><strong>Vote Count:</strong></td><td>${block.votes.length}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Cryptographic Hashes</h6>
+                    <div class="mb-2">
+                        <small><strong>Block Hash:</strong></small>
+                        <div class="hash-display">${block.hash}</div>
+                    </div>
+                    <div>
+                        <small><strong>Previous Hash:</strong></small>
+                        <div class="hash-display">${block.previous_hash}</div>
+                    </div>
+                </div>
+            </div>
+
+            ${block.votes.length > 0 ? `
+            <hr>
+            <h6>Votes in this Block</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Voter ID</th>
+                            <th>Election ID</th>
+                            <th>Candidate ID</th>
+                            <th>Timestamp</th>
+                            <th>Vote Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${block.votes.map(vote => `
+                        <tr>
+                            <td>${vote.voter_id}</td>
+                            <td>${vote.election_id}</td>
+                            <td>${vote.candidate_id}</td>
+                            <td>${new Date(vote.timestamp * 1000).toLocaleString()}</td>
+                            <td class="hash-display" style="max-width: 150px;">${vote.vote_hash.substring(0, 16)}...</td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : '<p class="text-muted">No votes in this block.</p>'}
+        `;
+
+        document.getElementById('blockDetails').innerHTML = detailsHtml;
+        modal.show();
+
+    } catch (error) {
+        console.error('Error loading block details:', error);
+        alert('Error loading block details: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

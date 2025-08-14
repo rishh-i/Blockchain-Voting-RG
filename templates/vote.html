@@ -1,10 +1,157 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Vote - {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="mb-0">🗳️ {{ election.name }}</h2>
+                <p class="mb-0 mt-2 opacity-75">Select your candidate below</p>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <h5 class="alert-heading">⚠️ Important Notice</h5>
+                    <p class="mb-0">
+                        Once you submit your vote, it cannot be changed. Your vote will be securely recorded
+                        on the blockchain and you will not be able to vote again in this election.
+                    </p>
+                </div>
+
+                <form method="POST" action="{{ url_for('voting.submit_vote') }}"
+                      onsubmit="return confirm('Are you sure you want to submit this vote? This action cannot be undone.');">
+                    <input type="hidden" name="election_id" value="{{ election.id }}">
+
+                    <div class="row">
+                        {% for candidate in candidates %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card candidate-card h-100" style="cursor: pointer;">
+                                <div class="card-body text-center">
+                                    <div class="form-check d-flex flex-column align-items-center">
+                                        <input class="form-check-input candidate-radio" type="radio"
+                                               name="candidate_id" id="candidate{{ candidate.id }}"
+                                               value="{{ candidate.id }}" required>
+                                        <label class="form-check-label w-100 mt-2" for="candidate{{ candidate.id }}">
+                                            <div class="candidate-info">
+                                                <h5 class="card-title mb-2">{{ candidate.name }}</h5>
+                                                {% if candidate.party %}
+                                                    <p class="card-text text-muted">{{ candidate.party }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5" id="submit-btn" disabled>
+                            ✅ Submit Vote
+                        </button>
+                        <a href="{{ url_for('voting.dashboard') }}" class="btn btn-secondary btn-lg px-5 ms-3">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🔒 Blockchain Security</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h6 class="text-info">🔐 Encrypted</h6>
+                            <p class="small text-muted">Your vote is encrypted and secure</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h6 class="text-info">🔗 Immutable</h6>
+                            <p class="small text-muted">Cannot be altered once recorded</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info">👁️ Transparent</h6>
+                        <p class="small text-muted">Auditable on the blockchain</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.candidate-card {
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+}
+
+.candidate-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.candidate-card.selected {
+    border-color: #28a745;
+    background-color: #f8fff9;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2);
+}
+
+.candidate-radio {
+    transform: scale(1.5);
+    margin-bottom: 10px;
+}
+
+.candidate-info {
+    pointer-events: none;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const candidateCards = document.querySelectorAll('.candidate-card');
+    const candidateRadios = document.querySelectorAll('.candidate-radio');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Handle card clicks
+    candidateCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.querySelector('.candidate-radio');
+            radio.checked = true;
+            updateSelection();
+        });
+    });
+
+    // Handle radio button changes
+    candidateRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateSelection();
+        });
+    });
+
+    function updateSelection() {
+        candidateCards.forEach(card => {
+            const radio = card.querySelector('.candidate-radio');
+            if (radio.checked) {
+                card.classList.add('selected');
+                submitBtn.disabled = false;
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

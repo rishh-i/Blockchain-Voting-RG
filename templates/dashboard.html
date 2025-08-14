@@ -1,130 +1,154 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Blockchain Voting{% endblock %}
+{% block title %}Dashboard - Blockchain Voting System{% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-tachometer-alt me-2"></i>Welcome, {{ current_user.voter_id }}!
-                </h4>
-            </div>
-            <div class="card-body">
-                <p class="card-text">Welcome to the secure blockchain voting system. Your vote is encrypted and stored on an immutable blockchain.</p>
-                {% if is_admin %}
-                <div class="alert alert-info">
-                    <i class="fas fa-crown me-2"></i>You have administrator privileges.
-                </div>
-                {% endif %}
-            </div>
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">
+                Welcome to Your Voting Dashboard
+            </h1>
+            {% if is_admin %}
+                <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-success">
+                    ⚙️ Admin Panel
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <div class="row">
     <!-- Available Elections -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-vote-yea me-2"></i>Available Elections
-                </h5>
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">🗳️ Available Elections</h4>
             </div>
             <div class="card-body">
                 {% if available_elections %}
-                    {% for election in available_elections %}
-                    <div class="border rounded p-3 mb-3">
-                        <h6 class="fw-bold">{{ election.name }}</h6>
-                        <p class="text-muted mb-2">
-                            <i class="fas fa-calendar me-1"></i>
-                            Started: {{ election.start_date.strftime('%Y-%m-%d %H:%M') }}
-                            {% if election.end_date %}
-                            <br><i class="fas fa-calendar-times me-1"></i>
-                            Ends: {{ election.end_date.strftime('%Y-%m-%d %H:%M') }}
-                            {% endif %}
-                        </p>
-                        <div class="d-flex gap-2">
-                            <a href="{{ url_for('voting.vote_page', election_id=election.id) }}" 
-                               class="btn btn-blockchain btn-sm">
-                                <i class="fas fa-vote-yea me-1"></i>Vote Now
-                            </a>
-                            <a href="{{ url_for('voting.results', election_id=election.id) }}" 
-                               class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-chart-bar me-1"></i>View Results
-                            </a>
+                    <div class="row">
+                        {% for election in available_elections %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">{{ election.name }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Started: {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                            {% if election.end_date %}
+                                                <br>Ends: {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                            {% else %}
+                                                <br>No end date set
+                                            {% endif %}
+                                        </small>
+                                    </p>
+                                    <a href="{{ url_for('voting.voting_page', election_id=election.id) }}"
+                                       class="btn btn-primary">Vote Now</a>
+                                    <a href="{{ url_for('voting.results', election_id=election.id) }}"
+                                       class="btn btn-outline-primary">View Results</a>
+                                </div>
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-3x mb-3"></i>
-                        <p>No elections available for voting at this time.</p>
+                    <div class="text-center py-4">
+                        <div class="display-1 text-muted">🗳️</div>
+                        <h4 class="text-muted">No elections available</h4>
+                        <p class="text-muted">Check back later for new elections to vote in.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- All Active Elections -->
-    <div class="col-md-6">
-        <div class="card">
+    <!-- Quick Info -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-list me-2"></i>All Active Elections
-                </h5>
+                <h5 class="mb-0">📊 Quick Stats</h5>
             </div>
             <div class="card-body">
-                {% if active_elections %}
-                    {% for election in active_elections %}
-                    <div class="border rounded p-3 mb-3">
-                        <h6 class="fw-bold">{{ election.name }}</h6>
-                        <p class="text-muted mb-2">
-                            <i class="fas fa-calendar me-1"></i>
-                            Started: {{ election.start_date.strftime('%Y-%m-%d %H:%M') }}
-                            {% if election.end_date %}
-                            <br><i class="fas fa-calendar-times me-1"></i>
-                            Ends: {{ election.end_date.strftime('%Y-%m-%d %H:%M') }}
-                            {% endif %}
-                        </p>
-                        <a href="{{ url_for('voting.results', election_id=election.id) }}" 
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-chart-bar me-1"></i>View Results
-                        </a>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                        <p>No active elections at this time.</p>
-                    </div>
-                {% endif %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Active Elections:</span>
+                    <span class="fw-bold">{{ active_elections|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Available to Vote:</span>
+                    <span class="fw-bold text-success">{{ available_elections|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Your Voter ID:</span>
+                    <span class="fw-bold">{{ current_user.voter_id }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">🔗 Blockchain</h5>
+            </div>
+            <div class="card-body text-center">
+                <p class="card-text">Explore the secure blockchain that powers our voting system.</p>
+                <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
+                    View Blockchain Explorer
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-{% if is_admin %}
+{% if active_elections %}
 <div class="row mt-4">
-    <div class="col-md-12">
+    <div class="col-12">
         <div class="card">
             <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="fas fa-cog me-2"></i>Admin Quick Actions
-                </h5>
+                <h5 class="mb-0">ℹ️ All Active Elections</h5>
             </div>
             <div class="card-body">
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ url_for('voting.create_election') }}" class="btn btn-success">
-                        <i class="fas fa-plus me-1"></i>Create Election
-                    </a>
-                    <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-primary">
-                        <i class="fas fa-list me-1"></i>Manage Elections
-                    </a>
-                    <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-info">
-                        <i class="fas fa-cubes me-1"></i>Blockchain Explorer
-                    </a>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Election Name</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for election in active_elections %}
+                            <tr>
+                                <td class="fw-bold">{{ election.name }}</td>
+                                <td>{{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                                <td>
+                                    {% if election.end_date %}
+                                        {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                    {% else %}
+                                        <span class="text-muted">No end date</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if election in available_elections %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Already Voted</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('voting.results', election_id=election.id) }}"
+                                       class="btn btn-sm btn-outline-primary">Results</a>
+                                    {% if election in available_elections %}
+                                        <a href="{{ url_for('voting.voting_page', election_id=election.id) }}"
+                                           class="btn btn-sm btn-primary">Vote</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

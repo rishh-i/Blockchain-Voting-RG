@@ -1,10 +1,190 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Results - {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white text-center">
+                <h2 class="mb-0">📊 {{ election.name }} - Results</h2>
+                <p class="mb-0 mt-2 opacity-75">Total Votes: {{ total_votes }}</p>
+            </div>
+            <div class="card-body">
+                {% if results %}
+                    <div class="row">
+                        <!-- Results Chart -->
+                        <div class="col-lg-8">
+                            {% for result in results %}
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <h5 class="mb-1 {% if loop.first %}text-success{% endif %}">
+                                            {% if loop.first %}🏆{% endif %} {{ result.candidate.name }}
+                                        </h5>
+                                        {% if result.candidate.party %}
+                                            <small class="text-muted">{{ result.candidate.party }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <h5 class="mb-0 {% if loop.first %}text-success{% endif %}">
+                                            {{ result.votes }} votes
+                                        </h5>
+                                        <small class="text-muted">{{ result.percentage }}%</small>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar {% if loop.first %}bg-success{% else %}bg-primary{% endif %}"
+                                         role="progressbar"
+                                         data-percentage="{{ result.percentage }}"
+                                         aria-valuenow="{{ result.percentage }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        {{ result.percentage }}%
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Summary Statistics -->
+                        <div class="col-lg-4">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">📈 Election Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Total Votes Cast:</strong>
+                                        <span class="float-end">{{ total_votes }}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Total Candidates:</strong>
+                                        <span class="float-end">{{ results|length }}</span>
+                                    </div>
+                                    {% if results %}
+                                    <div class="mb-3">
+                                        <strong>Leading Candidate:</strong>
+                                        <div class="text-end">
+                                            <div class="fw-bold text-success">{{ results[0].candidate.name }}</div>
+                                            <small class="text-muted">{{ results[0].votes }} votes ({{ results[0].percentage }}%)</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <hr>
+                                    <div class="text-center">
+                                        <small class="text-muted">
+                                            Results are recorded on the blockchain<br>
+                                            🔗 <a href="{{ url_for('blockchain.explorer') }}">View Blockchain</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Results Table -->
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">📋 Detailed Results</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Rank</th>
+                                                    <th>Candidate</th>
+                                                    <th>Votes</th>
+                                                    <th>%</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for result in results %}
+                                                <tr {% if loop.first %}class="table-success"{% endif %}>
+                                                    <td class="fw-bold">
+                                                        {% if loop.first %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-bold">{{ result.candidate.name }}</div>
+                                                        {% if result.candidate.party %}
+                                                            <small class="text-muted">{{ result.candidate.party }}</small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="fw-bold">{{ result.votes }}</td>
+                                                    <td>{{ result.percentage }}%</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="display-1 text-muted">📊</div>
+                        <h4 class="text-muted">No votes recorded yet</h4>
+                        <p class="text-muted">Results will appear here once voting begins.</p>
+                    </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('voting.dashboard') }}" class="btn btn-primary">
+                        ← Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
+                        🔗 View on Blockchain
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Election Information -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">ℹ️ Election Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Election Name:</strong> {{ election.name }}<br>
+                        <strong>Start Date:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}<br>
+                        {% if election.end_date %}
+                            <strong>End Date:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                        {% else %}
+                            <strong>End Date:</strong> <span class="text-muted">No end date set</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-light mb-0">
+                            <h6 class="alert-heading">🔒 Blockchain Security</h6>
+                            <p class="mb-0 small">
+                                All votes are cryptographically secured and immutably recorded on the blockchain.
+                                Results are transparent and verifiable by all participants.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths using JavaScript to avoid template syntax issues
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const percentage = bar.getAttribute('data-percentage');
+        bar.style.width = percentage + '%';
+
+        // Add minimum width for very small percentages to show some visual feedback
+        if (parseFloat(percentage) > 0 && parseFloat(percentage) < 5) {
+            bar.style.minWidth = '20px';
+        }
+    });
+});
+</script>
+{% endblock %}
