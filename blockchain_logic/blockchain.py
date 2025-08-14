@@ -1,6 +1,6 @@
-from hash_table import HashTable
+from blockchain_logic.hash_table import HashTable
 from threading import Lock
-from block import Block
+from blockchain_logic.block import Block
 
 class Blockchain:
     def __init__(self):

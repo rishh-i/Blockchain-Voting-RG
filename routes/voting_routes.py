@@ -55,14 +55,14 @@ def voting_page(election_id):
     #checks if user has already voted in this election
     existing_vote = VoteRecord.query.filter_by(
         voter_id=current_user.voter_id,
-        election_id=election.id
+        election_id=election_id
     ).first()
     if existing_vote:
         flash("You have already voted in this election.", "error")
         return redirect(url_for("voting.dashboard"))
 
     candidates = Candidate.query.filter_by(
-        election_id=election.id
+        election_id=election_id
     ).all()
 
     return render_template("vote.html", election = election, candidates = candidates)
@@ -73,7 +73,7 @@ def voting_page(election_id):
 # some steps are repeated throughout the routes e.g. checking if user has already voted
 def submit_vote():
     election_id = request.form.get("election_id", type=int)
-    candidate_id = request.form.getlist("candidate_id", type=int)
+    candidate_id = request.form.get("candidate_id", type=int)
 
     if not election_id or not candidate_id:
         flash("Invalid submission.", "error")
@@ -82,7 +82,7 @@ def submit_vote():
     election = Election.query.get_or_404(election_id)
     candidate = Candidate.query.filter_by(
         id=candidate_id,
-        election_id=election.id
+        election_id=election_id
     ).first()
 
     if not candidate:
@@ -91,7 +91,7 @@ def submit_vote():
 
     existing_vote = VoteRecord.query.filter_by(
         voter_id=current_user.voter_id,
-        election_id=election.id
+        election_id=election_id
     ).first()
 
     if existing_vote:
@@ -102,15 +102,15 @@ def submit_vote():
     try:
         bc_vote = Vote(
             voter_id=current_user.voter_id,
-            election_id=election.id,
-            candidate_id=candidate.id
+            election_id=election_id,
+            candidate_id=candidate_id
         )
 
         current_app.blockchain.add_vote(bc_vote) #adds vote to blockchain
 
         vote_record = VoteRecord(
             voter_id=current_user.voter_id,
-            election_id=election.id
+            election_id=election_id
         )
         db.session.add(vote_record)  # adds vote to database
         db.session.commit()
@@ -133,11 +133,11 @@ def submit_vote():
 def results(election_id):
     election = Election.query.get_or_404(election_id)
     candidates = Candidate.query.filter_by(
-        election_id=election.id
+        election_id=election_id
     ).all()
 
     blockchain_results = current_app.blockchain.get_results()
-    election_results = blockchain_results.get(election.id, {})
+    election_results = blockchain_results.get(election_id, {})
 
     results_data = []
     total_votes = sum(election_results.values())
@@ -224,7 +224,7 @@ def add_candidate(election_id):
             return render_template("add_candidate.html", election=election)
 
         try:
-            candidate = Candidate(name=name, party=party, election_id=election.id)
+            candidate = Candidate(name=name, party=party, election_id=election_id)
             db.session.add(candidate)
             db.session.commit()
             flash(f"Candidate {name} added successfully.", "success")
