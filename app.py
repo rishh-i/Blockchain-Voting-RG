@@ -29,10 +29,38 @@ def create_app():
         from models.user import User
         return User.query.get(int(user_id))
 
+    # register blueprints
     from routes.auth_routes import auth_bp
     from routes.voting_routes import voting_bp
-    # yet to finish all routes
+    from routes.blockchain_routes import blockchain_bp
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(voting_bp, url_prefix="/voting")
+    app.register_blueprint(blockchain_bp, url_prefix="/blockchain")
 
+    # main route
+    @app.route("/")
+    def index():
+        from flask import redirect, url_for
+        from flask_login import current_user
+        if current_user.is_authenticated:
+            return redirect(url_for("voting.dashboard"))
+        return redirect(url_for("auth.login"))
+
+    #create database tables
     with app.app_context():
         db.create_all()
 
+        from models.user import User
+        admin = User.query.filter_by(voter_id="admin").first()
+        if not admin:
+            admin = User(voter_id="admin", is_admin=True)
+            admin.set_password("admin123") #have to change later
+            db.session.add(admin)
+            db.session.commit()
+            # this creates an admin user if it doesn't exist already
+
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
