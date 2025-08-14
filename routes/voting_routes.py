@@ -128,7 +128,110 @@ def submit_vote():
 
     return redirect(url_for("voting.dashboard"))
 
+@voting_bp.route("/results/<int:election_id>")
+@login_required
+def results(election_id):
+    election = Election.query.get_or_404(election_id)
+    candidates = Candidate.query.filter_by(
+        election_id=election.id
+    ).all()
 
+    blockchain_results = current_app.blockchain.get_results()
+    election_results = blockchain_results.get(election.id, {})
 
+    results_data = []
+    total_votes = sum(election_results.values())
 
+    for candidate in candidates:
+        vote_count = election_results.get(candidate.id, 0)
+        percentage = (vote_count / total_votes * 100) if total_votes > 0 else 0
+        results_data.append({
+            "candidate": candidate,
+            "votes": vote_count,
+            "percentage": round(percentage, 2)
+        })
 
+    results_data.sort(key=lambda x: x["votes"], reverse=True)
+
+    return render_template(
+        "results.html",
+        election=election,
+        results=results_data,
+        total_votes=total_votes
+    )
+
+#admin routes below
+
+@voting_bp.route("/admin/elections")
+@login_required
+def admin_elections():
+    if not current_user.is_admin:
+        flash("You do not have permission to access this page.", "error")
+        return redirect(url_for("voting.dashboard"))
+
+    elections = Election.query.all()
+    return render_template("admin_elections.html", elections=elections)
+
+@voting_bp.route("/admin/create_election", methods=["GET","POST"])
+@login_required
+def create_election():
+    if not current_user.is_admin:
+        flash("You do not have permission to access this page.", "error")
+        return redirect(url_for("voting.dashboard"))
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        start_date_str = request.form.get("start_date")
+        end_date_str = request.form.get("end_date")
+
+        if not name or not start_date_str:
+            flash("Please fill in all required fields.", "error")
+            return render_template("create_election.html")
+
+        try:
+            start_date = datetime.fromisoformat(start_date_str).replace(tzinfo=timezone.utc)
+            end_date = None
+            if end_date_str:
+                end_date = datetime.fromisoformat(end_date_str).replace(tzinfo=timezone.utc)
+
+            election = Election(name=name, start_date=start_date, end_date=end_date)
+            db.session.add(election)
+            db.session.commit()
+            flash("Election created.", "success")
+            return redirect(url_for("voting.admin_elections"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error creating election", "error")
+
+    return render_template("create_election.html")
+
+@voting_bp.route("/admin/add_candidate/<int:election_id>", methods=["GET", "POST"])
+@login_required
+def add_candidate(election_id):
+    if not current_user.is_admin:
+        flash("You do not have permission to access this page.", "error")
+        return redirect(url_for("voting.dashboard"))
+
+    election = Election.query.get_or_404(election_id)
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        party = request.form.get("party")
+
+        if not name:
+            flash("Please enter a candidate name.", "error")
+            return render_template("add_candidate.html", election=election)
+
+        try:
+            candidate = Candidate(name=name, party=party, election_id=election.id)
+            db.session.add(candidate)
+            db.session.commit()
+            flash(f"Candidate {name} added successfully.", "success")
+            return redirect(url_for("voting.admin_elections"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error adding candidate", "error")
+
+    return render_template("add_candidate.html", election=election)
