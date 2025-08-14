@@ -1,4 +1,4 @@
-from blockchain_logic.hash_table import HashTable
+from .hash_table import HashTable
 from threading import Lock
 from blockchain_logic.block import Block
 
