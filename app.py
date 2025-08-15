@@ -3,8 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
 
-
-db = SQLAlchemy()
+from database import db
 login_manager = LoginManager()
 
 def create_app():
@@ -48,9 +47,16 @@ def create_app():
 
     #create database tables
     with app.app_context():
-        db.create_all()
-
+        # import models before db is created
         from models.user import User
+        # ide shows models are not used but they are needed for db creation
+        from models.election import Election
+        from models.candidate import Candidate
+        from models.vote_record import VoteRecord
+
+        db.create_all()
+        print("Database tables created.")
+
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:
             admin = User(voter_id="admin", is_admin=True)

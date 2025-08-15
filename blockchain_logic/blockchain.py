@@ -60,7 +60,7 @@ class Blockchain:
         self.chain.append(new_block)
         self.pending_votes = []  # clear pending votes after adding to the blockchain
 
-    def __add_remaining_votes(self):
+    def add_remaining_votes(self):
         # called when current pending votes need to be added to the blockchain regardless of the block size
 
         with self.chain_lock:

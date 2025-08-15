@@ -5,7 +5,7 @@ from models.election import Election
 from models.candidate import Candidate
 from models.vote_record import VoteRecord
 from blockchain_logic.vote import Vote
-from app import db
+from database import db
 from datetime import datetime, timezone
 
 voting_bp = Blueprint("voting", __name__)

@@ -1,4 +1,4 @@
-from app import db
+from database import db
 
 class Candidate(db.Model):
     __tablename__ = "candidates"
@@ -8,7 +8,7 @@ class Candidate(db.Model):
     party = db.Column(db.String(100), nullable=True)
     election_id = db.Column(db.Integer, db.ForeignKey("elections.id"), nullable=False)
 
-    election = db.relationship("Election", backref="candidates")
+    election = db.relationship("Election", back_populates="candidates")
 
     def __repr__(self):
         return f"<Candidate {self.name} from {self.party}>"

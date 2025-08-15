@@ -1,4 +1,4 @@
-from app import db
+from database import db
 from datetime import datetime, timezone
 
 """
@@ -14,3 +14,7 @@ class VoteRecord(db.Model):
     voter_id = db.Column(db.String(50), nullable=False)
     election_id = db.Column(db.Integer, db.ForeignKey("elections.id"), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    election = db.relationship("Election")
+    def __repr__(self):
+        return f"<VoteRecord {self.voter_id} in Election {self.election_id}>"
