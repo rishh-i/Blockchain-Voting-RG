@@ -7,7 +7,8 @@ from database import db
 login_manager = LoginManager()
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__,
+                template_folder="templates")
 
     #config
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev_secret_key")
