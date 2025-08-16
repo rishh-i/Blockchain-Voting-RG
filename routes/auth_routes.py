@@ -29,6 +29,8 @@ def login():
 
         return render_template("login.html")
 
+    return render_template("login.html")
+
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -70,6 +72,8 @@ def register():
             flash("Registration failed. Please try again.", "error")
 
         return render_template("register.html")
+
+    return render_template("register.html")
 
 @auth_bp.route("/logout")
 @login_required

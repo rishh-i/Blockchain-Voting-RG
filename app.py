@@ -8,7 +8,11 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__,
-                template_folder="templates")
+                template_folder=os.path.join(os.path.dirname(__file__), "templates"))
+
+    #debugging statements
+    print(f"Template folder: {app.template_folder}")
+    print(f"App root path: {app.root_path}")
 
     #config
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev_secret_key")
