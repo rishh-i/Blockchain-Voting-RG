@@ -14,7 +14,6 @@ voting_bp = Blueprint("voting", __name__)
 @login_required
 def dashboard():
 
-    #gets current elections
     now = datetime.now(timezone.utc) #stores current time which is used to filter elections
     active_elections = Election.query.filter(
         Election.start_date <= now,
