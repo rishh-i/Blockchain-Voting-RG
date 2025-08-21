@@ -61,6 +61,10 @@ def create_app():
 
         db.create_all()
         print("Database tables created.")
+        # FOR TESTING ONLY - Clear vote records on restart
+        VoteRecord.query.delete()
+        db.session.commit()
+        print("Vote records cleared for testing.")
 
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:

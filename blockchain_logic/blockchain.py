@@ -7,7 +7,7 @@ class Blockchain:
         self.chain = []
         self.pending_votes = [] # Votes that are pending to be added to the blockchain
         self.mining_difficulty = 2
-        self.block_size = 5
+        self.block_size = 1 # a new block is created/mined for every vote
         self.vote_registry = HashTable() # Hash table to store votes
         self.chain_lock = Lock()  # ensures only one thread can modify the chain at a time so prevents duplicate votes
         self.create_genesis_block()
@@ -26,20 +26,27 @@ class Blockchain:
         # adds and validates a vote before adding it to the pending votes
 
         with self.chain_lock:
+            print(f"BLOCKCHAIN DEBUG: Adding vote - voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
 
             if not vote.is_valid():
+                print(f"BLOCKCHAIN DEBUG: Invalid vote")
                 raise ValueError("Invalid vote")
 
             if self.__multiple_votes(vote):
+                print("BLOCKCHAIN DEBUG: Voter has already voted")
                 raise ValueError("Voter has already voted")
 
+            print("BLOCKCHAIN DEBUG: Adding vote to pending votes")
             self.pending_votes.append(vote)
 
             self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote  # stores the vote in the hash table
-            ##self.vote_registry.insert(f"{vote.voter_id}_{vote.election_id}", vote) # stores the vote in the hash table
+            print(f"BLOCKCHAIN DEBUG: Vote added to registry. Pending votes count: {len(self.pending_votes)}")
 
             if len(self.pending_votes) >= self.block_size:
+                print("BLOCKCHAIN DEBUG: Block size reached, creating new block")
                 self.__add_pending_votes()
+            else:
+                print(f"BLOCKCHAIN DEBUG: Block size not reached ({len(self.pending_votes)}/{self.block_size})")
 
     def __multiple_votes(self, vote):
         # checks if a voter has already voted through the hash table
@@ -95,6 +102,17 @@ class Blockchain:
                     results[election_id] = {}
 
                 results[election_id][candidate_id] = results[election_id].get(candidate_id, 0) + 1 # increments the vote count for the candidate, or starts at 0 if candidate_id not found
+
+        # we also need to count the votes that are pending in the current block
+        for vote in self.pending_votes:
+            election_id = vote.election_id
+            candidate_id = vote.candidate_id
+
+            if election_id not in results:
+                results[election_id] = {}
+
+            results[election_id][candidate_id] = results[election_id].get(candidate_id, 0) + 1
+
         return results
 
     def get_blockchain(self):

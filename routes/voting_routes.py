@@ -7,6 +7,7 @@ from models.vote_record import VoteRecord
 from blockchain_logic.vote import Vote
 from database import db
 from datetime import datetime, timezone
+import json
 
 voting_bp = Blueprint("voting", __name__)
 
@@ -81,6 +82,8 @@ def voting_page(election_id):
 def submit_vote():
     election_id = request.form.get("election_id", type=int)
     candidate_id = request.form.get("candidate_id", type=int)
+    print(f"DEBUG: Submitting vote - election_id: {election_id}, candidate_id: {candidate_id}, voter_id: {current_user.voter_id}")
+
 
     if not election_id or not candidate_id:
         flash("Invalid submission.", "error")
@@ -107,28 +110,37 @@ def submit_vote():
 
     # will use blockchain logic imported from folder blockchain_logic to cast vote
     try:
+        print("DEBUG: Creating blockchain vote")
         bc_vote = Vote(
             voter_id=current_user.voter_id,
             election_id=election_id,
             candidate_id=candidate_id
         )
+        print(f"DEBUG: Blockchain vote created - valid: {bc_vote.is_valid()}")
 
+        print("DEBUG: Adding vote to blockchain")
         current_app.blockchain.add_vote(bc_vote) #adds vote to blockchain
+        print("DEBUG: Vote successfully added to blockchain")
 
+        print("DEBUG: Creating vote record")
         vote_record = VoteRecord(
             voter_id=current_user.voter_id,
             election_id=election_id
         )
         db.session.add(vote_record)  # adds vote to database
         db.session.commit()
+        print("DEBUG: Vote record created successfully")
 
         flash(f"Vote submitted for {candidate.name}", "success")
 
     except ValueError as e:
+        print(f"DEBUG: ValueError occured: {str(e)}")
         flash(f"Vote submission failed: {str(e)}", "error")
         return redirect(url_for("voting.voting_page", election_id=election_id))
 
     except Exception as e:
+        print(f"DEBUG: Exception occured: {str(e)}")
+        print(f"DEBUG: Exception type: {type(e)}")
         db.session.rollback()
         flash("An error occurred while submitting your vote", "error")
         return redirect(url_for("voting.voting_page", election_id=election_id))
@@ -242,3 +254,55 @@ def add_candidate(election_id):
             flash("Error adding candidate", "error")
 
     return render_template("add_candidate.html", election=election)
+
+@voting_bp.route("/debug/blockchain")
+@login_required
+def debug_blockchain():
+    if not current_user.is_admin:
+        return "Admin only", 403
+
+    blockchain = current_app.blockchain
+
+    debug_info = {
+        "chain_length": len(blockchain.chain),
+        "pending_votes_count": len(blockchain.pending_votes),
+        "pending_votes": [],
+        "all_blocks_votes": [],
+        "results": blockchain.get_results()
+    }
+
+    # shows pending votes
+    for vote in blockchain.pending_votes:
+        debug_info["pending_votes"].append({
+            "voter_id": vote.voter_id,
+            "election_id": vote.election_id,
+            "candidate_id": vote.candidate_id
+        })
+
+    # shows all votes in all blocks
+    for i, block in enumerate(blockchain.chain):
+        block_votes = []
+        for vote in block.votes:
+            block_votes.append({
+                "voter_id": vote.voter_id,
+                "election_id": vote.election_id,
+                "candidate_id": vote.candidate_id
+            })
+        debug_info["all_blocks_votes"].append({
+            "block_index": i,
+            "votes": block_votes
+        })
+
+    return f"<pre>{json.dumps(debug_info, indent=2)}</pre>"
+
+
+@voting_bp.route("/admin/force_mine")
+@login_required
+def force_mine():
+    if not current_user.is_admin:
+        flash("Admin access required", "error")
+        return redirect(url_for("voting.dashboard"))
+
+    current_app.blockchain.add_remaining_votes()
+    flash("Pending votes added to blockchain", "success")
+    return redirect(url_for("voting.admin_elections"))
