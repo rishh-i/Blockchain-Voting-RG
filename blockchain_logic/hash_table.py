@@ -12,8 +12,8 @@ class HashTable:
         self.table = [[] for _ in range(self.size)]
 
     def __hash(self, key):
-        return hash(key) % self.size # modulus keeps value within bounds of the table size
-
+        return hash(key) % self.size # simple hashing algorithm to asign key
+    
     def __contains__(self, key):
         return self.get(key) is not None
 
