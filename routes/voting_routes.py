@@ -43,11 +43,19 @@ def voting_page(election_id):
     election = Election.query.get_or_404(election_id)
     now = datetime.now(timezone.utc)
 
+    election_start = election.start_date
+    if election_start.tzinfo is None:
+        election_start = election_start.replace(tzinfo=timezone.utc)
+
+    election_end = election.end_date
+    if election_end and election_end.tzinfo is None:
+        election_end = election_end.replace(tzinfo=timezone.utc)
+
     # general checks for election status
-    if election.start_date > now:
+    if election_start > now:
         flash("This election has not started yet.", "error")
         return redirect(url_for("voting.dashboard"))
-    if election.end_date and election.end_date < now:
+    if election_end and election_end < now:
         flash("This election has ended.", "error")
         return redirect(url_for("voting.dashboard"))
 
