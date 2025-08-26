@@ -10,10 +10,6 @@ def create_app():
     app = Flask(__name__,
                 template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 
-    #debugging statements
-    print(f"Template folder: {app.template_folder}")
-    print(f"App root path: {app.root_path}")
-
     #config
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev_secret_key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///voting.db")
@@ -26,7 +22,8 @@ def create_app():
 
     # initialises blockchain
     from blockchain_logic.blockchain import Blockchain
-    app.blockchain = Blockchain()
+    blockchain_file = os.path.join(os.path.dirname(__file__), "blockchain.json")
+    app.blockchain = Blockchain(blockchain_file)
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -54,17 +51,13 @@ def create_app():
     with app.app_context():
         # import models before db is created
         from models.user import User
-        # ide shows models are not used but they are needed for db creation
         from models.election import Election
         from models.candidate import Candidate
         from models.vote_record import VoteRecord
+        # ide shows models are not used, but they are needed for db creation
 
         db.create_all()
         print("Database tables created.")
-        # FOR TESTING ONLY - Clear vote records on restart
-        VoteRecord.query.delete()
-        db.session.commit()
-        print("Vote records cleared for testing.")
 
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:
@@ -74,7 +67,30 @@ def create_app():
             db.session.commit()
             # this creates an admin user if it doesn't exist already
 
+        sync_blockchain_with_database(app.blockchain)
+
     return app
+
+def sync_blockchain_with_database(blockchain):
+    '''
+    synchs blockchain with db records to ensure consistency on app restart
+    '''
+
+    try:
+        from models.vote_record import VoteRecord
+
+        all_vote_records = VoteRecord.query.all()
+        blockchain_votes = set()
+
+        for block in blockchain.chain:
+            for vote in block.votes:
+                blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
+
+        for vote in blockchain.pending_votes:
+            blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
+
+    except Exception as e:
+        print("Error: ", str(e))
 
 if __name__ == "__main__":
     app = create_app()

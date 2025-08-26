@@ -1,9 +1,13 @@
 from .hash_table import HashTable
 from threading import Lock
 from blockchain_logic.block import Block
+import os
+import json
+from blockchain_logic.vote import Vote
 
 class Blockchain:
-    def __init__(self):
+    def __init__(self, blockchain_file="blockchain.json"):
+        self.blockchain_file = blockchain_file
         self.chain = []
         self.pending_votes = [] # Votes that are pending to be added to the blockchain
         self.mining_difficulty = 2
@@ -11,6 +15,8 @@ class Blockchain:
         self.vote_registry = HashTable() # Hash table to store votes
         self.chain_lock = Lock()  # ensures only one thread can modify the chain at a time so prevents duplicate votes
         self.create_genesis_block()
+
+        self.load_blockchain() # loads existing bc file
 
     def create_genesis_block(self):
         # genesis block has no previous hash and has no votes
@@ -52,7 +58,6 @@ class Blockchain:
         # checks if a voter has already voted through the hash table
 
         return f"{vote.voter_id}_{vote.election_id}" in self.vote_registry
-        ## return self.vote_registry.get(f"{vote.voter_id}_{vote.election_id}") is not None
 
     def __add_pending_votes(self):
         # creates a new block with the pending votes and adds it to the blockchain
@@ -66,6 +71,8 @@ class Blockchain:
         new_block.mine_block(self.mining_difficulty)
         self.chain.append(new_block)
         self.pending_votes = []  # clear pending votes after adding to the blockchain
+
+        self.save_blockchain()  # save the blockchain to file after adding a new block
 
     def add_remaining_votes(self):
         # called when current pending votes need to be added to the blockchain regardless of the block size
@@ -118,3 +125,89 @@ class Blockchain:
     def get_blockchain(self):
         # returns entire blockchain as a list of dictionaries
         return [block.to_dict() for block in self.chain]
+
+    def save_blockchain(self):
+        # this saves the blockchain to a file in JSON format
+        try:
+            blockchain_data = {
+                "chain": [block.to_dict() for block in self.chain],
+                "pending_votes": [vote.to_dict() for vote in self.pending_votes]
+            }
+            with open(self.blockchain_file, 'w') as file:
+                json.dump(blockchain_data, file, indent=2)
+            print(f"BLOCKCHAIN DEBUG: Blockchain saved to {self.blockchain_file}")
+        except Exception as e:
+            print(f"BLOCKCHAIN DEBUG: Error saving blockchain: {str(e)}")
+
+    def load_blockchain(self):
+        # loads the blockchain from a json file
+        try:
+            if os.path.exists(self.blockchain_file):
+                print(f"BLOCKCHAIN DEBUG: Loading blockchain from {self.blockchain_file}")
+
+                with open(self.blockchain_file, 'r') as file:
+                    blockchain_data = json.load(file)
+
+                # reconstructing the chain
+                self.chain = []
+                self.pending_votes = []
+
+                for block_data in blockchain_data.get("chain", []):
+                    votes = []
+                    for vote_data in block_data.get("votes", []):
+                        vote = Vote(
+                            voter_id=vote_data["voter_id"],
+                            election_id=vote_data["election_id"],
+                            candidate_id=vote_data["candidate_id"],
+                        )
+                        vote.timestamp = vote_data["timestamp"]
+                        vote.vote_hash = vote_data["vote_hash"]
+                        votes.append(vote)
+                        self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
+
+                    block = Block(
+                        index=block_data["index"],
+                        votes=votes,
+                        previous_hash=block_data["previous_hash"]
+                    )
+                    block.timestamp = block_data["timestamp"]
+                    block.nonce = block_data["nonce"]
+                    block.hash = block_data["hash"]
+                    self.chain.append(block)
+
+                for vote_data in blockchain_data.get("pending_votes", []):
+                    vote = Vote(
+                        voter_id=vote_data["voter_id"],
+                        election_id=vote_data["election_id"],
+                        candidate_id=vote_data["candidate_id"],
+                    )
+                    vote.timestamp = vote_data["timestamp"]
+                    vote.vote_hash = vote_data["vote_hash"]
+                    self.pending_votes.append(vote)
+                    self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
+                print(f"BLOCKCHAIN DEBUG: Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes")
+
+                #validate the loaded blockchain
+                if not self.validate_chain():
+                    print("BLOCKCHAIN DEBUG: Loaded blockchain is invalid, creating new genesis block")
+                    self.chain = []
+                    self.pending_votes = []
+                    self.vote_registry = HashTable()
+                    self.create_genesis_block()
+                    self.save_blockchain()
+
+            else:
+                print(f"BLOCKCHAIN DEBUG: No existing blockchain file found, creating new genesis block")
+                self.create_genesis_block()
+                self.save_blockchain()
+
+        except Exception as e:
+            print(f"BLOCKCHAIN ERROR: Failed to load blockchain: {str(e)}")
+            print("BLOCKCHAIN DEBUG: Creating new genesis block")
+            self.chain = []
+            self.pending_votes = []
+            self.vote_registry = HashTable()
+            self.create_genesis_block()
+            self.save_blockchain()
+
+

@@ -1,0 +1,29 @@
+{
+  "chain": [
+    {
+      "index": 0,
+      "votes": [],
+      "previous_hash": "0",
+      "timestamp": 1756217979.930827,
+      "nonce": 65,
+      "hash": "00a8f0858c40b63b31d86df85473bd313a44129437225a305d5f6caf09fafb52"
+    },
+    {
+      "index": 1,
+      "votes": [
+        {
+          "voter_id": "voter001",
+          "candidate_id": 1,
+          "election_id": 1,
+          "timestamp": 1756218022.9008129,
+          "vote_hash": "2d792a9c55d28bbac083d02b3a397744b17015956ce84a80ab61c8c05e97918f"
+        }
+      ],
+      "previous_hash": "00a8f0858c40b63b31d86df85473bd313a44129437225a305d5f6caf09fafb52",
+      "timestamp": 1756218022.9009492,
+      "nonce": 257,
+      "hash": "003e64c4d867d0815175beccd43466bb11407e07dfecb2d367b6e98a13324095"
+    }
+  ],
+  "pending_votes": []
+}
