@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
 
+# main point to run application
+
 from database import db
 login_manager = LoginManager()
 
