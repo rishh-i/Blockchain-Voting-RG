@@ -23,6 +23,22 @@
       "timestamp": 1756218022.9009492,
       "nonce": 257,
       "hash": "003e64c4d867d0815175beccd43466bb11407e07dfecb2d367b6e98a13324095"
+    },
+    {
+      "index": 2,
+      "votes": [
+        {
+          "voter_id": "voter002",
+          "candidate_id": 1,
+          "election_id": 1,
+          "timestamp": 1756671839.7243423,
+          "vote_hash": "54d5d469233e938e27f743b0e52013e493a4329dd6dc7752da064c1cd16c2d8c"
+        }
+      ],
+      "previous_hash": "003e64c4d867d0815175beccd43466bb11407e07dfecb2d367b6e98a13324095",
+      "timestamp": 1756671839.7249448,
+      "nonce": 356,
+      "hash": "0058ed678f55d0606b76023799d03cb44b3e372ab2d7bd41790b003fd875de75"
     }
   ],
   "pending_votes": []

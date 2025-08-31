@@ -7,15 +7,15 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header bg-primary text-white text-center">
-                <h2 class="mb-0">🗳️ {{ election.name }}</h2>
+                <h2 class="mb-0">{{ election.name }}</h2>
                 <p class="mb-0 mt-2 opacity-75">Select your candidate below</p>
             </div>
             <div class="card-body">
                 <div class="alert alert-info" role="alert">
-                    <h5 class="alert-heading">⚠️ Important Notice</h5>
+                    <h5 class="alert-heading">Notice</h5>
                     <p class="mb-0">
-                        Once you submit your vote, it cannot be changed. Your vote will be securely recorded
-                        on the blockchain and you will not be able to vote again in this election.
+                        Once you submit your vote, it cannot be changed.
+                        Your vote will be recorded on the blockchain.
                     </p>
                 </div>
 
@@ -49,7 +49,7 @@
 
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-success btn-lg px-5" id="submit-btn" disabled>
-                            ✅ Submit Vote
+                            Submit Vote
                         </button>
                         <a href="{{ url_for('voting.dashboard') }}" class="btn btn-secondary btn-lg px-5 ms-3">
                             ← Back to Dashboard
@@ -61,14 +61,14 @@
 
         <div class="card mt-4">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0">🔒 Blockchain Security</h5>
+                <h5 class="mb-0">Blockchain Security</h5>
             </div>
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-md-4">
                         <div class="border-end">
-                            <h6 class="text-info">🔐 Encrypted</h6>
-                            <p class="small text-muted">Your vote is encrypted and secure</p>
+                            <h6 class="text-info">🔐 Private</h6>
+                            <p class="small text-muted">Only administrators can manage votes</p>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -79,7 +79,7 @@
                     </div>
                     <div class="col-md-4">
                         <h6 class="text-info">👁️ Transparent</h6>
-                        <p class="small text-muted">Auditable on the blockchain</p>
+                        <p class="small text-muted">Verifiable on the blockchain</p>
                     </div>
                 </div>
             </div>

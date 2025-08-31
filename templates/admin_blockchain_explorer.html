@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Blockchain Explorer - Blockchain Voting System{% endblock %}
+
+{% block content %}
+<style>
+    .block-card {
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    .vote-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px;
+        margin: 8px 0;
+        transition: all 0.2s ease;
+    }
+    .vote-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    .hash-display {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85em;
+        word-break: break-all;
+        background: #f1f3f4;
+        padding: 8px;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+    .admin-warning {
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #ffc107;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    .voter-id-visible {
+        background: #dc3545;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .genesis-block {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: 2px solid #ffb74d;
+    }
+    .sensitive-data {
+        background: #fff2f2;
+        border-left: 4px solid #dc3545;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+    }
+</style>
+
+<!-- Admin Warning -->
+<div class="admin-warning">
+    <h4 class="fw-bold text-warning">Admin Full Access View</h4>
+    <p class="mb-2"><strong>Warning:</strong> This view shows all voter details including voter IDs. This information is sensitive and should be kept confidential.</p>
+    <p class="mb-0"><small class="text-muted">This view is only available to administrators and is used for system auditing and debugging purposes.</small></p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">
+                Admin Blockchain Explorer
+            </h1>
+            <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-primary">
+                🔍 Public View
+            </a>
+        </div>
+    </div>
+</div>
+                <!-- Blockchain Status -->
+                <div class="mb-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Blockchain Status</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="blockchainStatus">
+                                <div class="d-flex align-items-center">
+                                    <span class="loading-spinner me-2"></span>
+                                    Loading blockchain status...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blockchain Blocks -->
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">⛓️ Complete Blockchain Data</h4>
+                        <small>Admin view - all voter information visible</small>
+                    </div>
+                    <div class="card-body">
+                        <div id="blocksContainer">
+                            <div class="d-flex align-items-center">
+                                <span class="loading-spinner me-2"></span>
+                                Loading blocks...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let blockchainData = null;
+
+        // Load blockchain data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBlockchainData();
+        });
+
+        async function loadBlockchainData() {
+            try {
+                const response = await fetch('/blockchain/api/admin/full_chain');
+                const data = await response.json();
+                
+                if (response.status === 403) {
+                    document.getElementById('blockchainStatus').innerHTML = 
+                        '<div class="alert alert-danger">❌ Admin access required</div>';
+                    return;
+                }
+                
+                blockchainData = data;
+                displayBlockchainStatus(data);
+                displayBlocks(data.chain);
+            } catch (error) {
+                console.error('Error loading blockchain data:', error);
+                document.getElementById('blockchainStatus').innerHTML = 
+                    '<div class="alert alert-danger">❌ Error loading blockchain data</div>';
+                document.getElementById('blocksContainer').innerHTML = 
+                    '<div class="alert alert-danger">❌ Error loading blocks</div>';
+            }
+        }
+
+        function displayBlockchainStatus(data) {
+            const totalVotes = getTotalVoteCount(data.chain);
+            const uniqueVoters = getUniqueVoterCount(data.chain);
+            const statusHtml = `
+                <div class="row text-center">
+                    <div class="col-md-2 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h4 class="text-primary">${data.length}</h4>
+                                <small class="text-muted fw-bold">Total Blocks</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h4 class="text-info">${totalVotes}</h4>
+                                <small class="text-muted fw-bold">Total Votes</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h4 class="text-success">${uniqueVoters}</h4>
+                                <small class="text-muted fw-bold">Unique Voters</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-${data.is_valid ? 'success' : 'danger'}">
+                            <div class="card-body">
+                                <span class="badge ${data.is_valid ? 'bg-success' : 'bg-danger'} p-2">
+                                    ${data.is_valid ? '✓ Valid Chain' : '✗ Invalid Chain'}
+                                </span>
+                                <br><small class="text-muted fw-bold">Chain Integrity</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h4 class="text-warning">${data.chain.filter(block => block.votes.length === 0).length}</h4>
+                                <small class="text-muted fw-bold">Empty Blocks</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('blockchainStatus').innerHTML = statusHtml;
+        }
+
+        function getTotalVoteCount(chain) {
+            return chain.reduce((total, block) => total + block.votes.length, 0);
+        }
+
+        function getUniqueVoterCount(chain) {
+            const voters = new Set();
+            chain.forEach(block => {
+                block.votes.forEach(vote => {
+                    voters.add(vote.voter_id);
+                });
+            });
+            return voters.size;
+        }
+
+        function displayBlocks(chain) {
+            const container = document.getElementById('blocksContainer');
+            let html = '';
+
+            chain.forEach((block, index) => {
+                const isGenesis = block.index === 0;
+                html += `
+                    <div class="block-card ${isGenesis ? 'genesis-block' : ''}">
+                        <div class="card-header ${isGenesis ? 'bg-warning text-dark' : 'bg-danger text-white'} d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">
+                                ${isGenesis ? 'Genesis Block #' : 'Block #'}${block.index}
+                            </h5>
+                            <div>
+                                <span class="badge ${isGenesis ? 'bg-dark' : 'bg-light text-dark'} me-2">${block.votes.length} votes</span>
+                                ${!isGenesis ? '<span class="badge bg-warning text-dark">Admin View</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong class="text-primary">Timestamp:</strong><br>
+                                    <small class="text-muted">${new Date(block.timestamp * 1000).toLocaleString()}</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-primary">Nonce:</strong> <span class="fw-bold">${block.nonce}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong class="text-primary">Block Hash:</strong>
+                                <div class="hash-display mt-1">${block.hash}</div>
+                            </div>
+                            
+                            ${!isGenesis ? `
+                                <div class="mb-3">
+                                    <strong class="text-primary">Previous Hash:</strong>
+                                    <div class="hash-display mt-1">${block.previous_hash}</div>
+                                </div>
+                            ` : ''}
+
+                            ${block.votes.length > 0 ? `
+                                <div class="mb-3">
+                                    <strong class="text-primary">Complete Vote Records:</strong>
+                                    <div class="sensitive-data">
+                                        <small class="fw-bold">Sensitive Data:</small> <small class="text-muted">Voter IDs are visible in admin view</small>
+                                    </div>
+                                    <div class="mt-2">
+                                        ${block.votes.map(vote => `
+                                            <div class="vote-item">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="voter-id-visible">${vote.voter_id}</span>
+                                                        <span class="ms-2">→ Candidate ID: <strong class="text-primary">${vote.candidate_id}</strong> in Election ID: <strong class="text-info">${vote.election_id}</strong></span>
+                                                    </div>
+                                                    <small class="text-muted fw-bold">
+                                                        ${new Date(vote.timestamp * 1000).toLocaleString()}
+                                                    </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <small class="text-primary fw-bold">Vote Hash:</small>
+                                                    <div class="hash-display">${vote.vote_hash}</div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="text-center text-muted p-4">
+                                    <div class="display-1">${isGenesis ? '' : ''}</div>
+                                    <h5 class="text-muted">${isGenesis ? 'Genesis block - No votes recorded' : 'No votes in this block'}</h5>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<div class="alert alert-info">No blocks found</div>';
+        }
+
+        // Auto-refresh blockchain data every 30 seconds
+        setInterval(loadBlockchainData, 30000);
+    </script>
+{% endblock %}
