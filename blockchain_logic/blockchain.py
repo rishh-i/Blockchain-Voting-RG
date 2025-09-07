@@ -209,5 +209,3 @@ class Blockchain:
             self.vote_registry = HashTable()
             self.create_genesis_block()
             self.save_blockchain()
-
-

@@ -10,7 +10,7 @@ class Block:
         self.votes = votes
         self.previous_hash = previous_hash
         self.timestamp = time.time()
-        self.nonce = 0 # for proof of work
+        self.nonce = 0 # short for "number used once", represents how many attempts were made to find a valid hash
         self.hash = self.__calculate_hash()
 
     def __calculate_hash(self):
