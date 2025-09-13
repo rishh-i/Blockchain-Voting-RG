@@ -82,7 +82,6 @@ def voting_page(election_id):
 def submit_vote():
     election_id = request.form.get("election_id", type=int)
     candidate_id = request.form.get("candidate_id", type=int)
-    print(f"DEBUG: Submitting vote - election_id: {election_id}, candidate_id: {candidate_id}, voter_id: {current_user.voter_id}")
 
 
     if not election_id or not candidate_id:

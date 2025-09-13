@@ -74,9 +74,8 @@ def create_app():
     return app
 
 def sync_blockchain_with_database(blockchain):
-    '''
-    synchs blockchain with db records to ensure consistency on app restart
-    '''
+
+    # syncs blockchain with db records to ensure consistency on app restart
 
     try:
         from models.vote_record import VoteRecord
