@@ -2,8 +2,7 @@ from database import db
 from datetime import datetime, timezone
 
 """
-This is a database record to log that a user has voted in an election.
-It does not store the actual vote as that is in the blockchain.
+db model does not store the actual vote as that is in the blockchain.
 It is used to prevent double voting.
 """
 
