@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__,
                 template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 
-    #configure db
+    #configure db with sqlalchemy (sql code will either be added here or in documentation)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev_secret_key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///voting.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

@@ -126,18 +126,23 @@
 
         <!-- Vote Validation Section -->
         <div class="validation-section">
-            <h4 class="fw-bold text-primary mb-3">🔒 Validate Your Vote</h4>
-            <p class="text-muted mb-3">Enter your credentials to privately verify that your vote is recorded on the blockchain. This information is only visible to you.</p>
+            <h4 class="fw-bold text-primary mb-3">Validate Your Vote</h4>
+            <p class="text-muted mb-3">Enter the Election ID to verify that your vote is recorded on the blockchain.</p>
 
             <form id="validationForm">
+                <!-- voter ID cannot be changed -->
+                <input type="hidden" id="voterIdInput" value="{{ current_user.voter_id if current_user.is_authenticated else '' }}">
+
                 <div class="row align-items-end">
                     <div class="col-md-4 mb-3">
-                        <label for="voterIdInput" class="form-label fw-bold">Your Voter ID:</label>
-                        <input type="text" class="form-control" id="voterIdInput" placeholder="Enter your voter ID" value="{{ current_user.voter_id if current_user.is_authenticated else '' }}">
+                        <label class="form-label fw-bold">Your Voter ID:</label>
+                        <div class="form-control bg-light" style="cursor: not-allowed;">
+                            <strong>{{ current_user.voter_id if current_user.is_authenticated else 'Not logged in' }}</strong>
+                        </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="electionIdInput" class="form-label fw-bold">Election ID:</label>
-                        <input type="number" class="form-control" id="electionIdInput" placeholder="Enter election ID" min="1">
+                        <input type="number" class="form-control" id="electionIdInput" placeholder="Enter election ID" min="1" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">&nbsp;</label>
@@ -260,18 +265,80 @@
     }
 
     function displayBlocks(chain) {
-        const container = document.getElementById('blocksContainer');
-        let html = '';
+    const container = document.getElementById('blocksContainer');
+    let html = '';
 
-        chain.forEach((block, index) => {
-            const isGenesis = block.index === 0;
-            html += `
-                <div class="block-card ${isGenesis ? 'genesis-block' : ''}"> ... </div>
-            `;
-        });
+    chain.forEach((block, index) => {
+        const isGenesis = block.index === 0;
+        html += `
+            <div class="block-card ${isGenesis ? 'genesis-block' : ''}">
+                <div class="card-header ${isGenesis ? 'bg-warning text-dark' : 'bg-secondary text-white'} d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        ${isGenesis ? 'Genesis Block #' : 'Block #'}${block.index}
+                    </h5>
+                    <div>
+                        <span class="badge ${isGenesis ? 'bg-dark' : 'bg-light text-dark'} me-2">${block.votes.length} votes</span>
+                        <span class="anonymous-label">Anonymous View</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong class="text-primary">Timestamp:</strong><br>
+                            <small class="text-muted">${new Date(block.timestamp * 1000).toLocaleString()}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <strong class="text-primary">Nonce:</strong> <span class="fw-bold">${block.nonce}</span>
+                        </div>
+                    </div>
 
-        container.innerHTML = html || '<div class="alert alert-info">No blocks found</div>';
-    }
+                    <div class="mb-3">
+                        <strong class="text-primary">Block Hash:</strong>
+                        <div class="hash-display mt-1">${block.hash}</div>
+                    </div>
+
+                    ${!isGenesis ? `
+                        <div class="mb-3">
+                            <strong class="text-primary">Previous Hash:</strong>
+                            <div class="hash-display mt-1">${block.previous_hash}</div>
+                        </div>
+                    ` : ''}
+
+                    ${block.votes.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="text-primary">Votes in this Block:</strong>
+                            <div class="mt-2">
+                                ${block.votes.map(vote => `
+                                    <div class="vote-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="anonymous-label">Anonymous Voter</span>
+                                                <span class="ms-2">→ Candidate ID: <strong class="text-primary">${vote.candidate_id}</strong> in Election ID: <strong class="text-info">${vote.election_id}</strong></span>
+                                            </div>
+                                            <small class="text-muted fw-bold">
+                                                ${new Date(vote.timestamp * 1000).toLocaleString()}
+                                            </small>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-primary fw-bold">Vote Hash:</small>
+                                            <div class="hash-display">${vote.vote_hash}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="text-center text-muted p-4">
+                            <h5 class="text-muted">${isGenesis ? 'Genesis block - No votes recorded' : 'No votes in this block'}</h5>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html || '<div class="alert alert-info">No blocks found</div>';
+}
 
     // Vote validation functionality
     document.getElementById('validationForm').addEventListener('submit', function(e) {
@@ -280,7 +347,121 @@
     });
 
     async function validateVote() {
-        // (rest of your JS unchanged)
+        const voterId = document.getElementById('voterIdInput').value.trim();
+        const electionId = document.getElementById('electionIdInput').value.trim();
+        const resultDiv = document.getElementById('validationResult');
+        const buttonText = document.getElementById('validateButtonText');
+        const spinner = document.getElementById('validateSpinner');
+
+        // Clear previous results
+        resultDiv.innerHTML = '';
+
+        // Validate inputs
+        if (!voterId || !electionId) {
+            resultDiv.innerHTML = `
+                <div class="validation-result validation-error">
+                    <strong>Error:</strong> Please enter both Voter ID and Election ID
+                </div>
+            `;
+            return;
+        }
+
+        // Show loading state
+        buttonText.classList.add('d-none');
+        spinner.classList.remove('d-none');
+
+        try {
+            const response = await fetch('/blockchain/api/validate_vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    voter_id: voterId,
+                    election_id: parseInt(electionId)
+                })
+            });
+
+            const data = await response.json();
+
+            // Hide loading state
+            buttonText.classList.remove('d-none');
+            spinner.classList.add('d-none');
+
+            if (response.status === 403) {
+                resultDiv.innerHTML = `
+                    <div class="validation-result validation-error">
+                        <strong>Unauthorised:</strong> ${data.error}
+                    </div>
+                `;
+                return;
+            }
+
+            if (!response.ok) {
+                resultDiv.innerHTML = `
+                    <div class="validation-result validation-error">
+                        <strong>Error:</strong> ${data.error || 'Failed to validate vote'}
+                    </div>
+                `;
+                return;
+            }
+
+            // Display results
+            if (data.vote_found) {
+                const blockStatus = data.block_index === "Pending"
+                    ? '<span class="badge bg-warning text-dark">Pending Mining</span>'
+                    : `<span class="badge bg-success">Block #${data.block_index}</span>`;
+
+                const timestamp = new Date(data.timestamp * 1000).toLocaleString();
+
+                resultDiv.innerHTML = `
+                    <div class="validation-result validation-success">
+                        <h5 class="fw-bold mb-3">Vote Successfully Verified</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Status:</strong> ${blockStatus}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Candidate ID:</strong> <span class="badge bg-primary">${data.candidate_id}</span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Timestamp:</strong> <small>${timestamp}</small>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Block Hash:</strong> ${data.block_hash === "Pending" ? '<span class="text-muted">Pending</span>' : '<small class="text-muted">Available</small>'}
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <strong>Vote Hash:</strong>
+                            <div class="hash-display mt-1">${data.vote_hash}</div>
+                        </div>
+                        <p class="mt-3 mb-0 text-success">
+                            <small><strong>Your vote is securely recorded on the blockchain.</strong></small>
+                        </p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="validation-result validation-error">
+                        <h5 class="fw-bold mb-2">Vote Not Found</h5>
+                        <p class="mb-0">No vote found for Voter ID <strong>${voterId}</strong> in Election ID <strong>${electionId}</strong>.</p>
+                        <p class="mb-0 mt-2"><small>Please check your credentials or verify that you have voted in this election.</small></p>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            // Hide loading state
+            buttonText.classList.remove('d-none');
+            spinner.classList.add('d-none');
+
+            console.error('Error validating vote:', error);
+            resultDiv.innerHTML = `
+                <div class="validation-result validation-error">
+                    <strong>Error:</strong> Failed to connect to the server. Please try again.
+                </div>
+            `;
+        }
     }
 
     // Auto-refresh blockchain data every 30 seconds

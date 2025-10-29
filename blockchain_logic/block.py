@@ -3,7 +3,7 @@ import hashlib
 import json
 
 class Block:
-    # Represents a single block in the blockchain
+    # represents a single block in the blockchain
 
     def __init__(self, index, votes, previous_hash):
         self.index = index
@@ -21,7 +21,7 @@ class Block:
         return hashlib.sha256(block_string.encode()).hexdigest()
 
     def mine_block(self, difficulty=2):
-
+        # difficulty of 2 corresponds to the number of leading zeros required in the hash i.e. larger difficulty requires more computational work
         while self.hash[:difficulty] != '0' * difficulty:
             self.nonce += 1
             self.hash = self.__calculate_hash()

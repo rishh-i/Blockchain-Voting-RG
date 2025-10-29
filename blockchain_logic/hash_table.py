@@ -1,5 +1,5 @@
 class HashTable:
-
+# purpose of this hash table is to prevent double voting
     """
     Key: string (voter_id_election_id)
     Value: Vote object
@@ -7,18 +7,16 @@ class HashTable:
 
     def __init__(self, size=100):
         # initialises a hash table with an empty buckets
-        # each slot is a list to handle collisions via chaining
         self.size = size
-        self.table = [[] for _ in range(self.size)]
+        self.table = [[] for _ in range(self.size)] # list is used to handle collisions via chaining
 
     def __hash(self, key):
-        return hash(key) % self.size # simple hashing algorithm to asign key
+        return hash(key) % self.size # simple hashing algorithm to assign key
     
     def __contains__(self, key):
         return self.get(key) is not None
 
     def __setitem__(self, key, value):
-        # allows using the hash table like a dictionary with bracket notation
         self.insert(key, value)
 
     def __getitem__(self, key):

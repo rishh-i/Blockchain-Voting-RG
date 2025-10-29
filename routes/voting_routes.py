@@ -14,7 +14,7 @@ voting_bp = Blueprint("voting", __name__)
 @voting_bp.route("/dashboard")
 @login_required
 def dashboard():
-
+    # need to convert sqlalchemy to SQL queries
     now = datetime.now(timezone.utc) #stores current time which is used to filter elections
     active_elections = Election.query.filter(
         Election.start_date <= now,

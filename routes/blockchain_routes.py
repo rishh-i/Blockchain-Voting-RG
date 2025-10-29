@@ -81,9 +81,8 @@ def get_block(block_index):
 @blockchain_bp.route("/api/validate_vote", methods=["POST"])
 @login_required
 def validate_vote():
-    """
-    Allows user to check if their vote is recorded in the blockchain.
-    """
+
+    # Allows user to check if their vote is recorded in the blockchain.
     try:
         data = request.get_json()
         if not data:
@@ -140,9 +139,8 @@ def validate_vote():
 @blockchain_bp.route("api/admin/full_chain")
 @login_required
 def get_full_chain():
-    """
-    only admin account can access full chain with voter details
-    """
+
+    #only admin account can access full chain with voter details
     if not current_user.is_admin:
         return jsonify({"error": "Admin access required"}), 403
 

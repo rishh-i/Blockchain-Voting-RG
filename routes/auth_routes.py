@@ -7,18 +7,18 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated: # if user is already logged in, redirect to dashboard
         return redirect(url_for("voting.dashboard"))
 
-    if request.method == "POST":
+    if request.method == "POST": # else require login
         voter_id = request.form.get("voter_id")
         password = request.form.get("password")
 
-        if not voter_id or not password:
+        if not voter_id or not password: #validates against null inputs
             flash("Please fill in all fields.", "error")
             return render_template("login.html")
 
-        user = User.query.filter_by(voter_id=voter_id).first()
+        user = User.query.filter_by(voter_id=voter_id).first() #sql query to find user by voter_id
 
         if user and user.check_password(password):
             login_user(user)
@@ -42,6 +42,7 @@ def register():
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
+        # input validation
         if not voter_id or not password or not confirm_password:
             flash("Please fill in all fields.", "error")
             return render_template("register.html")
