@@ -1,12 +1,13 @@
 from database import db
 from datetime import datetime, timezone
+from models.base import Base, get_current_utc
 
-class Election(db.Model):
+class Election(Base):
     __tablename__ = "elections"
 
-    id = db.Column(db.Integer, primary_key=True)
+    #id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    start_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    start_date = db.Column(db.DateTime, default=get_current_utc)
     end_date = db.Column(db.DateTime, nullable=True)
 
     candidates = db.relationship("Candidate", back_populates="election", cascade="all, delete-orphan")

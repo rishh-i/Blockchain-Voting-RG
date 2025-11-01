@@ -1,15 +1,16 @@
 from database import db
 from datetime import datetime, timezone
+from models.base import Base
 
 """
 db model does not store the actual vote as that is in the blockchain.
 It is used to prevent double voting.
 """
 
-class VoteRecord(db.Model):
+class VoteRecord(Base):
     __tablename__ = "vote_records"
 
-    id = db.Column(db.Integer, primary_key=True)
+    #id = db.Column(db.Integer, primary_key=True)
     voter_id = db.Column(db.String(50), nullable=False)
     election_id = db.Column(db.Integer, db.ForeignKey("elections.id"), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

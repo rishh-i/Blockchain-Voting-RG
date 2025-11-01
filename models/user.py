@@ -1,13 +1,14 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from models.base import Base
 
 from database import db
 
-class User(UserMixin, db.Model):
+class User(UserMixin, Base):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
+    #id = db.Column(db.Integer, primary_key=True)
     voter_id = db.Column(db.String(50), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
