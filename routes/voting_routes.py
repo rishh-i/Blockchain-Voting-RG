@@ -146,6 +146,11 @@ def submit_vote():
 
     return redirect(url_for("voting.dashboard"))
 
+def vote_key(item):
+    # this function is defined for sorting results, it is called in the results route
+    #could also be removed by using lambda function in sort call
+    return item["votes"]
+
 @voting_bp.route("/results/<int:election_id>")
 @login_required
 def results(election_id):
@@ -169,7 +174,7 @@ def results(election_id):
             "percentage": round(percentage, 2)
         })
 
-    results_data.sort(key=lambda x: x["votes"], reverse=True)
+    results_data.sort(key=vote_key, reverse=True) # referencing to vote_key function defined above
 
     return render_template(
         "results.html",
@@ -178,7 +183,7 @@ def results(election_id):
         total_votes=total_votes
     )
 
-#admin routes below
+#admin routes below:
 
 @voting_bp.route("/admin/elections")
 @login_required
