@@ -78,11 +78,9 @@ def voting_page(election_id):
 
 @voting_bp.route("/submit_vote", methods=["POST"])
 @login_required
-# some steps are repeated throughout the routes e.g. checking if user has already voted
 def submit_vote():
     election_id = request.form.get("election_id", type=int)
     candidate_id = request.form.get("candidate_id", type=int)
-
 
     if not election_id or not candidate_id:
         flash("Invalid submission.", "error")
@@ -107,7 +105,7 @@ def submit_vote():
         flash("You have already voted in this election.", "error")
         return redirect(url_for("voting.dashboard"))
 
-    # will use blockchain logic imported from folder blockchain_logic to cast vote
+    # uses blockchain.py imported from folder blockchain_logic to cast vote
     try:
         print("DEBUG: Creating blockchain vote")
         bc_vote = Vote(
@@ -262,6 +260,8 @@ def add_candidate(election_id):
 @voting_bp.route("/debug/blockchain")
 @login_required
 def debug_blockchain():
+    # this route is a debugging tool for the admin (possibly remove later)
+    # shows blockchain data (the blockchain.json file)
     if not current_user.is_admin:
         return "Admin only", 403
 
@@ -302,6 +302,8 @@ def debug_blockchain():
 
 @voting_bp.route("/admin/force_mine")
 @login_required
+# this route allows the admin to add any remaining votes to the blockchain in a new block
+# this will usually be needed when for example: block size is 5 votes, and there are 2 pending votes
 def force_mine():
     if not current_user.is_admin:
         flash("Admin access required", "error")

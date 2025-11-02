@@ -74,24 +74,47 @@ def create_app():
     return app
 
 def sync_blockchain_with_database(blockchain):
-
     # syncs blockchain with db records to ensure consistency on app restart
 
     try:
         from models.vote_record import VoteRecord
 
-        all_vote_records = VoteRecord.query.all()
         blockchain_votes = set()
-
+        # this is for the votes already mined in the blockchain
         for block in blockchain.chain:
             for vote in block.votes:
                 blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
 
+        # this is for the pending votes not yet mined in the blockchain
         for vote in blockchain.pending_votes:
             blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
 
+        # get all votes from database
+        all_vote_records = VoteRecord.query.all()
+        db_votes = {f"{vote.voter_id}_{vote.election_id}" for vote in all_vote_records} # set comprehension
+
+        # below are methods to handle errors in the system
+
+        # find the votes that are not in database but are in blockchain
+        # this is done by subtracting the sets which leaves the values in bc_votes that are not in db_votes
+        votes_to_add = blockchain_votes - db_votes
+        if votes_to_add:
+            # add the remaining votes to the db
+            for vote_key in votes_to_add:
+                voter_id, election_id = vote_key.split("_")
+                record = VoteRecord(voter_id=voter_id, election_id=int(election_id))
+                db.session.add(record)
+            db.session.commit()
+
+        # find the votes that are in database but not in blockchain
+        votes_in_db_not_in_bc = db_votes - blockchain_votes
+        if votes_in_db_not_in_bc:
+            # ideally this should not happen, so we log a warning for further review
+            print(f"WARNING: Data inconsistency as {len(votes_in_db_not_in_bc)} votes are in database but not in blockchain.")
+
     except Exception as e:
         print("Error: ", str(e))
+        db.session.rollback()
 
 if __name__ == "__main__":
     app = create_app()
