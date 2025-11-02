@@ -10,7 +10,7 @@ def login():
     if current_user.is_authenticated: # if user is already logged in, redirect to dashboard
         return redirect(url_for("voting.dashboard"))
 
-    if request.method == "POST": # else require login
+    if request.method == "POST":
         voter_id = request.form.get("voter_id")
         password = request.form.get("password")
 

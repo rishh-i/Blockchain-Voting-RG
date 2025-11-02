@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, redirect, url_for
 from flask_login import login_required, current_user
-import json
 
 blockchain_bp = Blueprint("blockchain", __name__)
 @blockchain_bp.route("/explorer")
@@ -12,6 +11,7 @@ def explorer():
 @blockchain_bp.route("/admin/full_explorer")
 @login_required
 def admin_full_explorer():
+    # this is for the admin page of the bc explorer; i.e. able to view full details
     if not current_user.is_admin:
         flash("Admin access required", "error")
         return redirect(url_for("voting.dashboard"))
@@ -82,7 +82,7 @@ def get_block(block_index):
 @login_required
 def validate_vote():
 
-    # Allows user to check if their vote is recorded in the blockchain.
+    # allows user to check if their vote is recorded in the blockchain.
     try:
         data = request.get_json()
         if not data:
