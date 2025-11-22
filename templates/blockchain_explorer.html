@@ -70,8 +70,8 @@
         font-weight: 500;
     }
     .genesis-block {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        border: 2px solid #ffb74d;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+        border: 2px solid #dddddd;
     }
     .loading-spinner {
         display: inline-block;
@@ -272,7 +272,7 @@
         const isGenesis = block.index === 0;
         html += `
             <div class="block-card ${isGenesis ? 'genesis-block' : ''}">
-                <div class="card-header ${isGenesis ? 'bg-warning text-dark' : 'bg-secondary text-white'} d-flex justify-content-between align-items-center">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold">
                         ${isGenesis ? 'Genesis Block #' : 'Block #'}${block.index}
                     </h5>

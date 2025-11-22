@@ -35,7 +35,7 @@
     }
     .admin-warning {
         background: rgba(255, 255, 255, 0.95);
-        border: 2px solid #ffc107;
+        border: 2px solid #667eea;
         border-radius: 20px;
         padding: 25px;
         margin-bottom: 30px;
@@ -43,7 +43,7 @@
         backdrop-filter: blur(10px);
     }
     .voter-id-visible {
-        background: #dc3545;
+        background: #e9ecef;
         color: white;
         padding: 4px 12px;
         border-radius: 15px;
@@ -64,12 +64,16 @@
         100% { transform: rotate(360deg); }
     }
     .genesis-block {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        border: 2px solid #ffb74d;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #dc3545;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
     }
     .sensitive-data {
         background: #fff2f2;
-        border-left: 4px solid #dc3545;
+        border-left: 4px solid #667eea;
         padding: 10px;
         margin: 10px 0;
         border-radius: 5px;
@@ -78,7 +82,7 @@
 
 <!-- Admin Warning -->
 <div class="admin-warning">
-    <h4 class="fw-bold text-warning">Admin Full Access View</h4>
+    <h4 class="fw-bold text-primary">Admin Full Access View</h4>
     <p class="mb-2"><strong>Warning:</strong> This view shows all voter details including voter IDs. This information is sensitive and should be kept confidential.</p>
     <p class="mb-0"><small class="text-muted">This view is only available to administrators and is used for system auditing and debugging purposes.</small></p>
 </div>
@@ -237,12 +241,12 @@
                 const isGenesis = block.index === 0;
                 html += `
                     <div class="block-card ${isGenesis ? 'genesis-block' : ''}">
-                        <div class="card-header ${isGenesis ? 'bg-warning text-dark' : 'bg-danger text-white'} d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fw-bold">
                                 ${isGenesis ? 'Genesis Block #' : 'Block #'}${block.index}
                             </h5>
                             <div>
-                                <span class="badge ${isGenesis ? 'bg-dark' : 'bg-light text-dark'} me-2">${block.votes.length} votes</span>
+                                <span class="badge bg-light text-dark me-2">${block.votes.length} votes</span>
                                 ${!isGenesis ? '<span class="badge bg-warning text-dark">Admin View</span>' : ''}
                             </div>
                         </div>
