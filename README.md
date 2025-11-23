@@ -1,2 +1,3 @@
-# Blockchain Voting RG NEA
+# Blockchain Voting Rishi Gupta
 
+Project in good progress...
