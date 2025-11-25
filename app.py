@@ -10,9 +10,9 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__,
-                template_folder=os.path.join(os.path.dirname(__file__), "templates"))
+                template_folder=os.path.join(os.path.dirname(__file__), "templates")) # links to the templates folder which contains html for UI
 
-    #configure db with sqlalchemy (sql code will either be added here or in documentation)
+    # db using sqlalchemy, raw SQL will be added in documentation
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev_secret_key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///voting.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -22,8 +22,10 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Log in to access this page."
 
-    # initialises blockchain
+    # initialises blockchain from blockhain_logic folder
     from blockchain_logic.blockchain import Blockchain
+
+    # assigns JSON file which stores the actual blockchain to the variable
     blockchain_file = os.path.join(os.path.dirname(__file__), "blockchain.json")
     app.blockchain = Blockchain(blockchain_file)
 
@@ -32,7 +34,7 @@ def create_app():
         from models.user import User
         return User.query.get(int(user_id))
 
-    # register blueprints
+    # blueprints loaded for the web-app which other pages/sites will build from
     from routes.auth_routes import auth_bp
     from routes.voting_routes import voting_bp
     from routes.blockchain_routes import blockchain_bp
@@ -40,7 +42,7 @@ def create_app():
     app.register_blueprint(voting_bp, url_prefix="/voting")
     app.register_blueprint(blockchain_bp, url_prefix="/blockchain")
 
-    # main route
+    # default route
     @app.route("/")
     def index():
         from flask import redirect, url_for
@@ -49,7 +51,7 @@ def create_app():
             return redirect(url_for("voting.dashboard"))
         return redirect(url_for("auth.login"))
 
-    #create database tables
+    #creates database tables
     with app.app_context():
         # import models before db is created
         from models.user import User
@@ -61,13 +63,14 @@ def create_app():
         db.create_all()
         print("Database tables created.")
 
+        # checks if admin account is stored in db
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:
+            # creates an intial admin account if one hasn't been created already i.e. first time executing program
             admin = User(voter_id="admin", is_admin=True)
             admin.set_password("admin123") #have to change later
             db.session.add(admin)
             db.session.commit()
-            # this creates an admin user if it doesn't exist already
 
         sync_blockchain_with_database(app.blockchain)
 
@@ -80,12 +83,12 @@ def sync_blockchain_with_database(blockchain):
         from models.vote_record import VoteRecord
 
         blockchain_votes = set()
-        # this is for the votes already mined in the blockchain
+        # this is for the votes already mined/added in the blockchain
         for block in blockchain.chain:
             for vote in block.votes:
                 blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
 
-        # this is for the pending votes not yet mined in the blockchain
+        # this is for the pending votes not yet mined/added in the blockchain
         for vote in blockchain.pending_votes:
             blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
 
