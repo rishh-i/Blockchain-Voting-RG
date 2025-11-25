@@ -22,7 +22,7 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Log in to access this page."
 
-    # initialises blockchain from blockhain_logic folder
+    # initialises blockchain from blockchain_logic folder
     from blockchain_logic.blockchain import Blockchain
 
     # assigns JSON file which stores the actual blockchain to the variable
@@ -66,7 +66,7 @@ def create_app():
         # checks if admin account is stored in db
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:
-            # creates an intial admin account if one hasn't been created already i.e. first time executing program
+            # creates an initial admin account if one hasn't been created already i.e. first time executing program
             admin = User(voter_id="admin", is_admin=True)
             admin.set_password("admin123") #have to change later
             db.session.add(admin)
@@ -84,6 +84,7 @@ def sync_blockchain_with_database(blockchain):
 
         blockchain_votes = set()
         # this is for the votes already mined/added in the blockchain
+        # votes from the blockchain are added to a set
         for block in blockchain.chain:
             for vote in block.votes:
                 blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
@@ -92,12 +93,11 @@ def sync_blockchain_with_database(blockchain):
         for vote in blockchain.pending_votes:
             blockchain_votes.add(f"{vote.voter_id}_{vote.election_id}")
 
-        # get all votes from database
+        # get all *vote records* from database
         all_vote_records = VoteRecord.query.all()
         db_votes = {f"{vote.voter_id}_{vote.election_id}" for vote in all_vote_records} # set comprehension
 
         # below are methods to handle errors in the system
-
         # find the votes that are not in database but are in blockchain
         # this is done by subtracting the sets which leaves the values in bc_votes that are not in db_votes
         votes_to_add = blockchain_votes - db_votes
