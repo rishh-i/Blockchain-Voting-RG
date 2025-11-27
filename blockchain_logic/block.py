@@ -15,7 +15,6 @@ class Block:
 
     def __calculate_hash(self):
         #private method to calculate the hash of the block
-
         votes_string = json.dumps([vote.to_dict() for vote in self.votes], sort_keys=True)
         block_string = f"{self.index}{votes_string}{self.previous_hash}{self.timestamp}{self.nonce}"
         return hashlib.sha256(block_string.encode()).hexdigest()
