@@ -20,7 +20,6 @@ class Blockchain:
 
     def create_genesis_block(self):
         # genesis block has no previous hash and has no votes
-
         genesis_block = Block(0, [], "0")
         genesis_block.mine_block(self.mining_difficulty)
         self.chain.append(genesis_block)
@@ -32,31 +31,29 @@ class Blockchain:
         # adds and validates a vote before adding it to the pending votes
 
         with self.chain_lock:
-            print(f"BLOCKCHAIN DEBUG: Adding vote - voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
+            print(f"DEBUG: Adding vote voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
 
             if not vote.is_valid():
-                print(f"BLOCKCHAIN DEBUG: Invalid vote")
+                # is_valid is a method from the Vote class which checks hash of block
                 raise ValueError("Invalid vote")
 
             if self.__multiple_votes(vote):
-                print("BLOCKCHAIN DEBUG: Voter has already voted")
                 raise ValueError("Voter has already voted")
 
-            print("BLOCKCHAIN DEBUG: Adding vote to pending votes")
             self.pending_votes.append(vote)
 
             self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote  # stores the vote in the hash table
-            print(f"BLOCKCHAIN DEBUG: Vote added to registry. Pending votes count: {len(self.pending_votes)}")
+            print(f"DEBUG: Vote added to hash table")
 
             if len(self.pending_votes) >= self.block_size:
-                print("BLOCKCHAIN DEBUG: Block size reached, creating new block")
+                print("DEBUG: Max block size reached, creating new block")
                 self.__add_pending_votes()
             else:
-                print(f"BLOCKCHAIN DEBUG: Block size not reached ({len(self.pending_votes)}/{self.block_size})")
+                print(f"DEBUG: Block size not reached ({len(self.pending_votes)}/{self.block_size})")
 
     def __multiple_votes(self, vote):
-        # checks if a voter has already voted through the hash table
-
+        # checks if a voter has already voted via the hash table
+        # hash table only stores if a voter has voted in an election, NOT the actual details
         return f"{vote.voter_id}_{vote.election_id}" in self.vote_registry
 
     def __add_pending_votes(self):
@@ -76,7 +73,7 @@ class Blockchain:
 
     def add_remaining_votes(self):
         # called when current pending votes need to be added to the blockchain regardless of the block size
-
+        # this is needed when election is ending so remaining votes need to be mined
         with self.chain_lock:
             if self.pending_votes:
                 self.__add_pending_votes()
@@ -135,15 +132,16 @@ class Blockchain:
             }
             with open(self.blockchain_file, 'w') as file:
                 json.dump(blockchain_data, file, indent=2)
-            print(f"BLOCKCHAIN DEBUG: Blockchain saved to {self.blockchain_file}")
+            print(f"DEBUG: Blockchain saved to {self.blockchain_file}")
         except Exception as e:
-            print(f"BLOCKCHAIN DEBUG: Error saving blockchain: {str(e)}")
+            print(f"DEBUG: Error in saving blockchain: {str(e)}")
 
     def load_blockchain(self):
         # loads the blockchain from a json file
+        # used to maintain persistance when program ends and runs
         try:
             if os.path.exists(self.blockchain_file):
-                print(f"BLOCKCHAIN DEBUG: Loading blockchain from {self.blockchain_file}")
+                print(f"DEBUG: Loading blockchain from {self.blockchain_file}")
 
                 with open(self.blockchain_file, 'r') as file:
                     blockchain_data = json.load(file)
@@ -185,11 +183,11 @@ class Blockchain:
                     vote.vote_hash = vote_data["vote_hash"]
                     self.pending_votes.append(vote)
                     self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
-                print(f"BLOCKCHAIN DEBUG: Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes")
+                print(f"DEBUG: Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes not yet mined/added.")
 
                 #validate the loaded blockchain
                 if not self.validate_chain():
-                    print("BLOCKCHAIN DEBUG: Loaded blockchain is invalid, creating new genesis block")
+                    print("DEBUG: Loaded blockchain is invalid so creating new genesis block")
                     self.chain = []
                     self.pending_votes = []
                     self.vote_registry = HashTable()
@@ -197,13 +195,13 @@ class Blockchain:
                     self.save_blockchain()
 
             else:
-                print(f"BLOCKCHAIN DEBUG: No existing blockchain file found, creating new genesis block")
+                print(f"DEBUG: No blockchain file found so creating new genesis block")
                 self.create_genesis_block()
                 self.save_blockchain()
 
         except Exception as e:
-            print(f"BLOCKCHAIN ERROR: Failed to load blockchain: {str(e)}")
-            print("BLOCKCHAIN DEBUG: Creating new genesis block")
+            print(f"ERROR: Failed to load blockchain: {str(e)}")
+            print("DEBUG: Creating new genesis block")
             self.chain = []
             self.pending_votes = []
             self.vote_registry = HashTable()
