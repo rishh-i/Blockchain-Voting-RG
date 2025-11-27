@@ -146,7 +146,7 @@ def submit_vote():
 
 def vote_key(item):
     # this function is defined for sorting results, it is called in the results route
-    #could also be removed by using lambda function in sort call
+    # this could also be replaced by using lambda function in sort call
     return item["votes"]
 
 @voting_bp.route("/results/<int:election_id>")

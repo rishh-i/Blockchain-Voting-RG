@@ -2,7 +2,7 @@ import time
 import hashlib
 
 class Vote:
-    # class represents a single vote in the blockchain
+    # this class represents a single vote in the blockchain
 
     def __init__(self, voter_id, election_id, candidate_id):
         self.voter_id = voter_id
@@ -28,4 +28,5 @@ class Vote:
         }
 
     def is_valid(self):
+        # compares stored hash with calculated hash
         return self.vote_hash == self.__calculate_vote_hash()

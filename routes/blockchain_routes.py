@@ -11,7 +11,7 @@ def explorer():
 @blockchain_bp.route("/admin/full_explorer")
 @login_required
 def admin_full_explorer():
-    # this is for the admin page of the bc explorer; i.e. able to view full details
+    # this is for the admin page of the bc explorer; i.e. they have greater access and privileges
     if not current_user.is_admin:
         flash("Admin access required", "error")
         return redirect(url_for("voting.dashboard"))
@@ -82,7 +82,7 @@ def get_block(block_index):
 @login_required
 def validate_vote():
 
-    # allows user to check if their vote is recorded in the blockchain.
+    # method to allow user to check if their vote is recorded in the blockchain.
     try:
         data = request.get_json()
         if not data:

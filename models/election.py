@@ -5,13 +5,15 @@ from models.base import Base, get_current_utc
 class Election(Base):
     __tablename__ = "elections"
 
-    #id = db.Column(db.Integer, primary_key=True)
+    # the primary key is inherited from Base
     name = db.Column(db.String(100), nullable=False)
     start_date = db.Column(db.DateTime, default=get_current_utc)
     end_date = db.Column(db.DateTime, nullable=True)
 
+    # one-to-many relationship between Election and Candidate
     candidates = db.relationship("Candidate", back_populates="election", cascade="all, delete-orphan")
 
+    # @property is used to allow methods to be accessed like attributes
     @property
     def start_date_utc(self):
         # converts start_date (and end_date in next function) to UTC if no timezone info

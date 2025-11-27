@@ -1,17 +1,18 @@
 class HashTable:
-# purpose of this hash table is to prevent double voting
+    # the purpose of this hash table is to prevent double voting, without storing the specific details of any votes
+    # format of the hash table:
     """
     Key: string (voter_id_election_id)
-    Value: Vote object
+    Value: object Vote
     """
 
     def __init__(self, size=100):
-        # initialises a hash table with an empty buckets
+        # initialises a hash table with empty buckets
         self.size = size
-        self.table = [[] for _ in range(self.size)] # list is used to handle collisions via chaining
+        self.table = [[] for _ in range(self.size)] # a list is used to handle collisions via chaining
 
     def __hash(self, key):
-        return hash(key) % self.size # simple hashing algorithm to assign key
+        return hash(key) % self.size # hashing algorithm to assign key
     
     def __contains__(self, key):
         return self.get(key) is not None
@@ -26,7 +27,7 @@ class HashTable:
         return value
 
     def insert(self, key, value):
-        # adds or updates a key-value pair in the hash table which is a vote in this case
+        # adds or updates a key-value pair in the hash table
         index = self.__hash(key)
         bucket = self.table[index]
         for i, (k, v) in enumerate(bucket): # k represents the key and v represents the value
