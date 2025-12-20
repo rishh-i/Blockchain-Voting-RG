@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+
+{% block title %}All Feedback - Admin Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .feedback-overview-card {
+        transition: all 0.3s ease;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+    }
+    
+    .feedback-overview-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .sentiment-badge {
+        font-size: 0.9em;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .mini-chart {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    
+    .mini-chart-fill {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+    
+    .stats-card {
+        border-radius: 15px;
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-card:hover {
+        transform: scale(1.05);
+    }
+    
+    .election-row {
+        transition: background-color 0.2s ease;
+    }
+    
+    .election-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .sentiment-distribution {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+    }
+    
+    .sentiment-bar {
+        height: 6px;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+    
+    .sentiment-bar:hover {
+        height: 10px;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 5rem;
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">
+                        💬 Feedback Management Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Comprehensive overview of all election feedback with AI-powered sentiment analysis
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-outline-secondary">
+                        ← Back to Elections
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if feedback_data %}
+        <!-- Overall Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-primary">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="display-4">📊</i>
+                        </div>
+                        <h2 class="fw-bold text-primary mb-0">{{ feedback_data|length }}</h2>
+                        <p class="text-muted mb-0 small">Elections with Feedback</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-success">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="display-4">💬</i>
+                        </div>
+                        {% set total_feedback = feedback_data|sum(attribute='total') %}
+                        <h2 class="fw-bold text-success mb-0">{{ total_feedback }}</h2>
+                        <p class="text-muted mb-0 small">Total Feedback Received</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-info">
+                    <div class="card-body text-center">
+                        <div class="text-info mb-2">
+                            <i class="display-4">😊</i>
+                        </div>
+                        {% set total_positive = feedback_data|sum(attribute='positive') %}
+                        <h2 class="fw-bold text-info mb-0">{{ total_positive }}</h2>
+                        <p class="text-muted mb-0 small">Positive Sentiments</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-warning">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="display-4">🤖</i>
+                        </div>
+                        <h2 class="fw-bold text-warning mb-0">AI</h2>
+                        <p class="text-muted mb-0 small">ML-Powered Analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Sentiment Distribution -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-gradient text-white" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);">
+                        <h5 class="mb-0">📈 Overall Sentiment Distribution Across All Elections</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set total_positive = feedback_data|sum(attribute='positive') %}
+                        {% set total_neutral = feedback_data|sum(attribute='neutral') %}
+                        {% set total_negative = feedback_data|sum(attribute='negative') %}
+                        {% set grand_total = total_positive + total_neutral + total_negative %}
+                        
+                        {% if grand_total > 0 %}
+                            {% set positive_percent = (total_positive / grand_total * 100)|round(1) %}
+                            {% set neutral_percent = (total_neutral / grand_total * 100)|round(1) %}
+                            {% set negative_percent = (total_negative / grand_total * 100)|round(1) %}
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-md-4">
+                                    <div class="p-3 border-end">
+                                        <h3 class="text-success fw-bold">{{ total_positive }}</h3>
+                                        <p class="text-muted mb-0">Positive ({{ positive_percent }}%)</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 border-end">
+                                        <h3 class="text-warning fw-bold">{{ total_neutral }}</h3>
+                                        <p class="text-muted mb-0">Neutral ({{ neutral_percent }}%)</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <h3 class="text-danger fw-bold">{{ total_negative }}</h3>
+                                        <p class="text-muted mb-0">Negative ({{ negative_percent }}%)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress" style="height: 40px; border-radius: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ positive_percent }}%"
+                                     aria-valuenow="{{ positive_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    <strong>{{ positive_percent }}%</strong>
+                                </div>
+                                <div class="progress-bar bg-warning" role="progressbar" 
+                                     style="width: {{ neutral_percent }}%"
+                                     aria-valuenow="{{ neutral_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    <strong>{{ neutral_percent }}%</strong>
+                                </div>
+                                <div class="progress-bar bg-danger" role="progressbar" 
+                                     style="width: {{ negative_percent }}%"
+                                     aria-valuenow="{{ negative_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    <strong>{{ negative_percent }}%</strong>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback by Election -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">🗳️ Feedback Breakdown by Election</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">#</th>
+                                        <th style="width: 30%;">Election Name</th>
+                                        <th style="width: 10%;" class="text-center">Total</th>
+                                        <th style="width: 30%;">Sentiment Distribution</th>
+                                        <th style="width: 15%;" class="text-center">Breakdown</th>
+                                        <th style="width: 10%;" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in feedback_data %}
+                                    <tr class="election-row">
+                                        <td class="align-middle text-center">
+                                            <strong class="text-primary">{{ loop.index }}</strong>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="fw-bold text-dark">{{ data.election.name }}</div>
+                                            <small class="text-muted">
+                                                ID: {{ data.election.id }} • 
+                                                Started: {{ data.election.start_date.strftime('%Y-%m-%d') }}
+                                            </small>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <span class="badge bg-secondary sentiment-badge">
+                                                {{ data.total }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle">
+                                            {% set pos_pct = (data.positive / data.total * 100)|round(0)|int if data.total > 0 else 0 %}
+                                            {% set neu_pct = (data.neutral / data.total * 100)|round(0)|int if data.total > 0 else 0 %}
+                                            {% set neg_pct = (data.negative / data.total * 100)|round(0)|int if data.total > 0 else 0 %}
+                                            
+                                            <div class="sentiment-distribution">
+                                                <div class="sentiment-bar bg-success flex-grow-1" 
+                                                     style="width: {{ pos_pct }}%"
+                                                     title="Positive: {{ data.positive }} ({{ pos_pct }}%)"></div>
+                                                <div class="sentiment-bar bg-warning flex-grow-1" 
+                                                     style="width: {{ neu_pct }}%"
+                                                     title="Neutral: {{ data.neutral }} ({{ neu_pct }}%)"></div>
+                                                <div class="sentiment-bar bg-danger flex-grow-1" 
+                                                     style="width: {{ neg_pct }}%"
+                                                     title="Negative: {{ data.negative }} ({{ neg_pct }}%)"></div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <span class="badge bg-success sentiment-badge" 
+                                                      title="Positive feedback">
+                                                    😊 {{ data.positive }}
+                                                </span>
+                                                <span class="badge bg-warning text-dark sentiment-badge" 
+                                                      title="Neutral feedback">
+                                                    😐 {{ data.neutral }}
+                                                </span>
+                                                <span class="badge bg-danger sentiment-badge" 
+                                                      title="Negative feedback">
+                                                    😞 {{ data.negative }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <a href="{{ url_for('feedback.view_feedback', election_id=data.election.id) }}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <strong>View</strong> →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Election Cards View (Alternative View) -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4 class="mb-3 text-secondary">📋 Detailed Election Cards</h4>
+            </div>
+            {% for data in feedback_data %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card feedback-overview-card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0 text-truncate" title="{{ data.election.name }}">
+                            {{ data.election.name }}
+                        </h5>
+                        <small class="text-muted">Election ID: {{ data.election.id }}</small>
+                    </div>
+                    <div class="card-body">
+                        <!-- Total Feedback -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Total Feedback:</span>
+                                <span class="badge bg-secondary fs-6">{{ data.total }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Sentiment Breakdown -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-success fw-bold">😊 Positive</span>
+                                <span class="text-success fw-bold">{{ data.positive }}</span>
+                            </div>
+                            <div class="mini-chart">
+                                <div class="mini-chart-fill bg-success" 
+                                     style="width: {{ (data.positive / data.total * 100)|round(0) if data.total > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-warning fw-bold">😐 Neutral</span>
+                                <span class="text-warning fw-bold">{{ data.neutral }}</span>
+                            </div>
+                            <div class="mini-chart">
+                                <div class="mini-chart-fill bg-warning" 
+                                     style="width: {{ (data.neutral / data.total * 100)|round(0) if data.total > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-danger fw-bold">😞 Negative</span>
+                                <span class="text-danger fw-bold">{{ data.negative }}</span>
+                            </div>
+                            <div class="mini-chart">
+                                <div class="mini-chart-fill bg-danger" 
+                                     style="width: {{ (data.negative / data.total * 100)|round(0) if data.total > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Dominant Sentiment -->
+                        <div class="alert alert-light mb-0 text-center">
+                            {% if data.positive >= data.neutral and data.positive >= data.negative %}
+                                <span class="badge bg-success sentiment-badge">
+                                    Predominantly Positive 😊
+                                </span>
+                            {% elif data.negative >= data.neutral and data.negative >= data.positive %}
+                                <span class="badge bg-danger sentiment-badge">
+                                    Predominantly Negative 😞
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark sentiment-badge">
+                                    Mostly Neutral 😐
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{{ url_for('feedback.view_feedback', election_id=data.election.id) }}"
+                           class="btn btn-primary w-100">
+                            View Detailed Feedback →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- AI Information Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">🤖 About AI-Powered Sentiment Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info fw-bold">How It Works:</h6>
+                                <ul class="mb-0">
+                                    <li><strong>TF-IDF Vectorization:</strong> Converts text into numerical features</li>
+                                    <li><strong>Logistic Regression:</strong> ML model classifies sentiment</li>
+                                    <li><strong>Real-time Analysis:</strong> Instant feedback classification</li>
+                                    <li><strong>Confidence Scoring:</strong> Shows model certainty (0-100%)</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info fw-bold">Understanding Sentiments:</h6>
+                                <ul class="mb-0">
+                                    <li><span class="badge bg-success">Positive</span> - Supportive, constructive feedback</li>
+                                    <li><span class="badge bg-warning text-dark">Neutral</span> - Balanced, informational comments</li>
+                                    <li><span class="badge bg-danger">Negative</span> - Critical, concerning feedback</li>
+                                    <li><strong>Use insights to improve future elections</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h2 class="text-muted mb-3">No Feedback Submitted Yet</h2>
+                        <p class="text-muted mb-4">
+                            Feedback will appear here once voters start submitting their thoughts about elections.
+                        </p>
+                        <div class="alert alert-info d-inline-block">
+                            <h6 class="alert-heading mb-2">💡 Pro Tip</h6>
+                            <p class="mb-0">
+                                Encourage voters to submit anonymous feedback after voting to gather valuable insights 
+                                about the election process and candidates.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">⚡ Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap justify-content-center">
+                        <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-outline-primary">
+                            📊 Manage Elections
+                        </a>
+                        <a href="{{ url_for('voting.create_election') }}" class="btn btn-outline-success">
+                            ➕ Create New Election
+                        </a>
+                        <a href="{{ url_for('blockchain.admin_full_explorer') }}" class="btn btn-outline-warning">
+                            🔗 Blockchain Explorer
+                        </a>
+                        <a href="{{ url_for('voting.dashboard') }}" class="btn btn-outline-secondary">
+                            🏠 Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add tooltips to sentiment bars
+    const sentimentBars = document.querySelectorAll('.sentiment-bar');
+    sentimentBars.forEach(bar => {
+        bar.style.cursor = 'pointer';
+    });
+    
+    // Animate progress bars on load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-in-out';
+            bar.style.width = width;
+        }, 100);
+    });
+    
+    // Animate mini charts
+    const miniChartFills = document.querySelectorAll('.mini-chart-fill');
+    miniChartFills.forEach(fill => {
+        const width = fill.style.width;
+        fill.style.width = '0%';
+        setTimeout(() => {
+            fill.style.width = width;
+        }, 200);
+    });
+});
+</script>
+{% endblock %}

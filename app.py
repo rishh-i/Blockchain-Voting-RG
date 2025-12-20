@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
+from ml_model.sentiment_analysis import SentimentAnalysisModel
 
 # main point to run application
 
@@ -28,6 +29,8 @@ def create_app():
     # assigns JSON file which stores the actual blockchain to the variable
     blockchain_file = os.path.join(os.path.dirname(__file__), "blockchain.json")
     app.blockchain = Blockchain(blockchain_file)
+
+    app.sentiment_analyser = SentimentAnalysisModel() # initialises the sentiment analysis model
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -58,6 +61,7 @@ def create_app():
         from models.election import Election
         from models.candidate import Candidate
         from models.vote_record import VoteRecord
+        # from models.feedback import Feedback
         # ide shows models are not used, but they are needed for db creation
 
         db.create_all()
