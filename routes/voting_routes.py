@@ -149,6 +149,7 @@ def vote_key(item):
     # this could also be replaced by using lambda function in sort call
     return item["votes"]
 
+
 @voting_bp.route("/results/<int:election_id>")
 @login_required
 def results(election_id):
@@ -183,6 +184,54 @@ def results(election_id):
 
 #admin routes below:
 
+from secrets import token_urlsafe
+from models.authorised_voter import AuthorisedVoter
+
+@voting_bp.route("/admin/generate_voter_ids", methods=["GET", "POST"])
+@login_required
+def generate_voter_ids():
+    if not current_user.is_admin:
+        flash("Admin access required", "error")
+        return redirect(url_for("voting.dashboard"))
+
+    generated_ids = []
+
+    if request.method == "POST":
+        count = request.form.get("count", type=int, default=1)
+
+        if count < 1 or count > 100:
+            flash("Please generate between 1-100 voter IDs.", "error")
+            return render_template("generate_voter_ids.html")
+
+        try:
+            for _ in range(count): # underscore used since var not needed
+                # generates a unique voter ID using token_urlsafe
+                voter_id = f"VOTER-{token_urlsafe(8)}" # parameter is for num of random bytes
+
+                # to ensure ids are unique
+                while AuthorisedVoter.query.filter_by(voter_id=voter_id).first():
+                    voter_id = f"VOTER-{token_urlsafe(8)}"
+
+                auth_voter = AuthorisedVoter(voter_id=voter_id)
+                db.session.add(auth_voter)
+                generated_ids.append(voter_id)
+
+            db.session.commit()
+            flash(f"Generated {count} voter IDs.", "success")
+
+            all_authorised_voters = AuthorisedVoter.query.order_by(AuthorisedVoter.created_at.desc()).all()
+            return render_template("generate_voter_ids.html", generated_ids=generated_ids, all_authorised_voters=all_authorised_voters)
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error occured generating IDs", "error")
+
+    # for GET requests
+    all_authorised_voters = AuthorisedVoter.query.order_by(AuthorisedVoter.created_at.desc()).all()
+
+    return render_template("generate_voter_ids.html", all_authorised_voters=all_authorised_voters)
+
+
 @voting_bp.route("/admin/elections")
 @login_required
 def admin_elections():
@@ -192,6 +241,7 @@ def admin_elections():
 
     elections = Election.query.all()
     return render_template("admin_elections.html", elections=elections)
+
 
 @voting_bp.route("/admin/create_election", methods=["GET","POST"])
 @login_required
@@ -227,6 +277,7 @@ def create_election():
 
     return render_template("create_election.html")
 
+
 @voting_bp.route("/admin/add_candidate/<int:election_id>", methods=["GET", "POST"])
 @login_required
 def add_candidate(election_id):
@@ -256,6 +307,7 @@ def add_candidate(election_id):
             flash("Error adding candidate", "error")
 
     return render_template("add_candidate.html", election=election)
+
 
 @voting_bp.route("/debug/blockchain")
 @login_required

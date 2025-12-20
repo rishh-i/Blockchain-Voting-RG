@@ -136,10 +136,13 @@
                     <div class="col-md-6">
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('voting.create_election') }}" class="btn btn-success">
-                                ➕ Create New Election
+                                Create New Election
+                            </a>
+                            <a href="{{ url_for('voting.generate_voter_ids') }}" class="btn btn-outline-secondary">
+                                Generate Voter IDs
                             </a>
                             <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
-                                🔗 View Blockchain Explorer
+                                View Blockchain Explorer
                             </a>
                         </div>
                     </div>

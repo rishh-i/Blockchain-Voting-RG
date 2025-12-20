@@ -61,6 +61,7 @@ def create_app():
         from models.election import Election
         from models.candidate import Candidate
         from models.vote_record import VoteRecord
+        from models.authorised_voter import AuthorisedVoter
         # from models.feedback import Feedback
         # ide shows models are not used, but they are needed for db creation
 

@@ -31,6 +31,7 @@ def login():
 
     return render_template("login.html")
 
+from models.authorised_voter import AuthorisedVoter
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -42,15 +43,28 @@ def register():
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
-        # input validation
+        # null input validation
         if not voter_id or not password or not confirm_password:
             flash("Please fill in all fields.", "error")
             return render_template("register.html")
 
+        # checks if entered voter_id is in authorised_voters table
+        authorised_voter = AuthorisedVoter.query.filter_by(voter_id=voter_id).first()
+        if not authorised_voter:
+            flash("Voter ID is not authorised. Contact admin.", "error")
+            return render_template("register.html")
+
+        # checks if (authorised) voter_id has already been registered
+        if authorised_voter.is_registered:
+            flash("You have already registered. Please login.", "error")
+            return render_template("register.html")
+
+        # compares password and confirm password entry
         if password != confirm_password:
             flash("Passwords do not match.", "error")
             return render_template("register.html")
 
+        # checks password length
         if len(password) < 7:
             flash("Password must have at least 7 characters.", "error")
             return render_template("register.html")
@@ -65,6 +79,7 @@ def register():
 
         try:
             db.session.add(new_user)
+            authorised_voter.is_registered = True # updates authorised_voter record as registered (bool)
             db.session.commit()
             flash("Registration successful. Please login.", "success")
             return redirect(url_for("auth.login"))

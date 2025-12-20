@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Voter IDs{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">Generate Voter IDs</h1>
+            <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-secondary">
+                ← Back to Admin
+            </a>
+        </div>
+
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"> </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row align-items-end">
+                        <div class="col-md-8">
+                            <label for="count" class="form-label fw-bold">Number of Voter IDs to Generate</label>
+                            <input type="number" class="form-control form-control-lg" id="count" name="count" 
+                                   min="1" max="100" value="1" required>
+                            <div class="form-text">Generate between 1 and 100 voter IDs</div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                Generate IDs
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="alert alert-info mt-4 mb-0">
+                    <h6 class="alert-heading">Note</h6>
+                    <ul class="mb-0">
+                        <li>IDs follow the format: VOTER-xxxxxxxx</li>
+                        <li>IDs cannot be deleted once registered</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        {% if generated_ids %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Recently Generated Voter IDs</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <strong>Success!</strong> {{ generated_ids|length }} voter IDs have been generated.
+                </div>
+                
+                <div class="mb-3">
+                    <button class="btn btn-outline-primary" onclick="copyAllIDs()">
+                        Copy All IDs to Clipboard
+                    </button>
+                    <button class="btn btn-outline-success" onclick="downloadIDs()">
+                        Download as Text File
+                    </button>
+                </div>
+
+                <div class="row">
+                    {% for voter_id in generated_ids %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="card border-success">
+                            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                <code class="voter-id-text">{{ voter_id }}</code>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="copyToClipboard('{{ voter_id }}', this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <textarea id="allIdsText" style="display:none;">{% for vid in generated_ids %}{{ vid }}
+{% endfor %}</textarea>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Authorised IDs -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Authorised IDs</h4>
+            </div>
+
+            <div class="mb-3">
+            <button class="btn btn-outline-primary" onclick="copyAllAuthIDs()">
+                Copy All IDs to Clipboard
+            </button>
+            <button class="btn btn-outline-success" onclick="downloadAuthIDs()">
+                Download as Text File
+            </button>
+        </div>
+
+        <textarea id="authIdsText" style="display:none;">{% for v in all_authorised_voters %}{{ v.voter_id }}
+        {% endfor %}</textarea>
+
+        <script>
+        function copyAllAuthIDs() {
+            const allIdsText = document.getElementById('authIdsText').value;
+            navigator.clipboard.writeText(allIdsText).then(function() {
+                alert('All authorised voter IDs copied to clipboard!');
+            }).catch(function(err) {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        function downloadAuthIDs() {
+            const allIdsText = document.getElementById('authIdsText').value;
+            const blob = new Blob([allIdsText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'authorised_voter_ids_' + new Date().toISOString().split('T')[0] + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        </script>
+
+            <div class="card-body">
+                <!-- html -->
+                {% if all_authorised_voters %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID #</th>
+                                    <th>Voter ID</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for voter in all_authorised_voters %}
+                                <tr>
+                                    <td class="fw-bold">#{{ voter.id }}</td>
+                                    <td><code>{{ voter.voter_id }}</code></td>
+                                    <td>
+                                        {% if voter.is_registered %}
+                                            <span class="badge bg-success">Registered</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ voter.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                onclick="copyToClipboard('{{ voter.voter_id }}', this)">
+                                            Copy
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3>{{ all_authorised_voters|length }}</h3>
+                                    <p class="mb-0">Total Generated</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    {% set registered_count = all_authorised_voters|selectattr('is_registered', 'equalto', true)|list|length %}
+                                    <h3>{{ registered_count }}</h3>
+                                    <p class="mb-0">Registered</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    {% set pending_count = all_authorised_voters|selectattr('is_registered', 'equalto', false)|list|length %}
+                                    <h3>{{ pending_count }}</h3>
+                                    <p class="mb-0">Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="display-1 text-muted"></div>
+                        <h4 class="text-muted">No IDs Generated Yet</h4>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control-lg {
+    border-radius: 10px;
+}
+
+.card {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+code.voter-id-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.table code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(function() {
+        const originalText = button.innerHTML;
+        button.innerHTML = '✓';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+
+function copyAllIDs() {
+    const allIdsText = document.getElementById('allIdsText').value;
+    navigator.clipboard.writeText(allIdsText).then(function() {
+        alert('All voter IDs copied to clipboard!');
+    }).catch(function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+
+function downloadIDs() {
+    const allIdsText = document.getElementById('allIdsText').value;
+    const blob = new Blob([allIdsText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'voter_ids_' + new Date().toISOString().split('T')[0] + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+</script>
+{% endblock %}

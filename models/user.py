@@ -8,7 +8,6 @@ from database import db
 class User(UserMixin, Base):
     __tablename__ = "users"
 
-    #id = db.Column(db.Integer, primary_key=True)
     voter_id = db.Column(db.String(50), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
