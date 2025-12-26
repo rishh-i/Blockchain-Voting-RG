@@ -11,7 +11,7 @@
             </h1>
             {% if is_admin %}
                 <a href="{{ url_for('voting.admin_elections') }}" class="btn btn-success">
-                    ⚙️ Admin Panel
+                    Admin Panel
                 </a>
             {% endif %}
         </div>
@@ -54,7 +54,7 @@
                     </div>
                 {% else %}
                     <div class="text-center py-4">
-                        <div class="display-1 text-muted">🗳️</div>
+                        <div class="display-1 text-muted"></div>
                         <h4 class="text-muted">No elections available</h4>
                         <p class="text-muted">Check back later for new elections to vote in.</p>
                     </div>
@@ -85,10 +85,10 @@
             </div>
         </div>
 
-        <!-- Blockchain Explorer Card -->
+        <!-- Blockchain Explorer -->
         <div class="card mb-4">
             <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">🔗 Blockchain Explorer</h5>
+                <h5 class="mb-0">Blockchain Explorer</h5>
             </div>
             <div class="card-body text-center">
                 <p class="card-text">Explore the secure blockchain that powers our voting system.</p>

@@ -56,7 +56,7 @@
                 </a>
                 <div class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
-                        <span class="navbar-text me-3">Welcome, {{ current_user.voter_id }}!</span>
+                        <span class="navbar-text me-3">Welcome, {{ current_user.firstname }}!</span>
                         <a class="nav-link" href="{{ url_for('voting.dashboard') }}">Dashboard</a>
                         <a class="nav-link" href="{{ url_for('blockchain.explorer') }}">Blockchain Explorer</a>
                         {% if current_user.is_admin %}
