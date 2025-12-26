@@ -5,12 +5,17 @@ from models.base import Base
 
 from database import db
 
+# inherits from Base to get primary key and timestamp fields
 class User(UserMixin, Base):
     __tablename__ = "users"
 
+    # user attributes
     voter_id = db.Column(db.String(50), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    firstname = db.Column(db.String(100), nullable=False)
+    lastname = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

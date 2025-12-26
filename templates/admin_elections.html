@@ -7,9 +7,14 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-5 fw-bold text-primary">Elections Management</h1>
-            <a href="{{ url_for('voting.create_election') }}" class="btn btn-success btn-lg">
-                ➕ Create New Election
-            </a>
+            <div>
+                <a href="{{ url_for('voting.generate_voter_ids') }}" class="btn btn-info btn-lg me-2">
+                    Generate Voter IDs
+                </a>
+                <a href="{{ url_for('voting.create_election') }}" class="btn btn-success btn-lg">
+                    Create New Election
+                </a>
+            </div>
         </div>
     </div>
 </div>

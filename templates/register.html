@@ -13,6 +13,7 @@
             align-items: center;
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
         }
         .register-container {
             background: rgba(255, 255, 255, 0.95);
@@ -20,8 +21,9 @@
             padding: 40px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
+            margin: 20px auto;
         }
         .btn-primary {
             background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
@@ -47,6 +49,14 @@
             border-radius: 10px;
             border: none;
         }
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        .row > [class*='col-'] {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -71,7 +81,26 @@
             <div class="mb-3">
                 <label for="voter_id" class="form-label fw-bold">Voter ID</label>
                 <input type="text" class="form-control" id="voter_id" name="voter_id" required
-                       placeholder="Enter unique voter ID">
+                       placeholder="Enter your assigned voter ID">
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="firstname" class="form-label fw-bold">Firstname</label>
+                    <input type="text" class="form-control" id="firstname" name="firstname" required
+                           placeholder="Firstname">
+                </div>
+                <div class="col-md-6">
+                    <label for="lastname" class="form-label fw-bold">Lastname</label>
+                    <input type="text" class="form-control" id="lastname" name="lastname" required
+                           placeholder="Lastname">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label fw-bold">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required
+                       placeholder="rg123@example.com">
             </div>
 
             <div class="mb-3">

@@ -72,7 +72,7 @@ def create_app():
         admin = User.query.filter_by(voter_id="admin").first()
         if not admin:
             # creates an initial admin account if one hasn't been created already i.e. first time executing program
-            admin = User(voter_id="admin", is_admin=True)
+            admin = User(voter_id="admin", is_admin=True, firstname="Admin", lastname="User", email="admin@voting.com")
             admin.set_password("admin123") #have to change later
             db.session.add(admin)
             db.session.commit()

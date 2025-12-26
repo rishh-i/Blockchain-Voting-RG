@@ -40,11 +40,14 @@ def register():
 
     if request.method == "POST":
         voter_id = request.form.get("voter_id")
+        firstname = request.form.get("firstname")
+        lastname = request.form.get("lastname")
+        email = request.form.get("email")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
         # null input validation
-        if not voter_id or not password or not confirm_password:
+        if not voter_id or not password or not confirm_password or not firstname or not lastname or not email:
             flash("Please fill in all fields.", "error")
             return render_template("register.html")
 
@@ -69,12 +72,19 @@ def register():
             flash("Password must have at least 7 characters.", "error")
             return render_template("register.html")
 
+        # checks if email already exists
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            flash("Email address already registered.", "error")
+            return render_template("register.html")
+
+        # checks if voter_id already exists
         existing_user = User.query.filter_by(voter_id=voter_id).first()
         if existing_user:
             flash("Voter ID already exists.", "error")
             return render_template("register.html")
 
-        new_user = User(voter_id=voter_id)
+        new_user = User(voter_id=voter_id, firstname=firstname, lastname=lastname, email=email)
         new_user.set_password(password)
 
         try:
