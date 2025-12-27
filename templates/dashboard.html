@@ -91,17 +91,13 @@
                 <h5 class="mb-0">Blockchain Explorer</h5>
             </div>
             <div class="card-body text-center">
-                <p class="card-text">Explore the secure blockchain that powers our voting system.</p>
+                <p class="card-text">View the blockchain of the voting system.</p>
                 <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary mb-2 w-100">
                     View Blockchain
                 </a>
-                {% if current_user.is_admin %}
-                    <a href="{{ url_for('blockchain.admin_full_explorer') }}" class="btn btn-outline-danger w-100">
-                        Admin View
-                    </a>
-                {% endif %}
+                <!-- i deleted the admin button here -->
                 <small class="text-muted d-block mt-2">
-                    Verify your votes and explore the transparent ledger
+                    Verify your votes and view the transparent ledger
                 </small>
             </div>
         </div>
