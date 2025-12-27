@@ -11,14 +11,14 @@ def login():
         return redirect(url_for("voting.dashboard"))
 
     if request.method == "POST":
-        voter_id = request.form.get("voter_id")
+        email = request.form.get("email")
         password = request.form.get("password")
 
-        if not voter_id or not password: #validates against null inputs
+        if not email or not password: #validates against null inputs
             flash("Please fill in all fields.", "error")
             return render_template("login.html")
 
-        user = User.query.filter_by(voter_id=voter_id).first() #sql query to find user by voter_id
+        user = User.query.filter_by(email=email).first() #sql query to find user by inputted email address
 
         if user and user.check_password(password):
             login_user(user)
