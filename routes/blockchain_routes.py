@@ -1,6 +1,21 @@
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 
+def handle_different_vote_types_object(vote):
+    # currently this is used for adding the correct type of candiadte id info to the vote
+    if hasattr(vote, "candidate_id"):
+        return {"candidate_id": vote.candidate_id}
+    elif hasattr(vote, "ranked_candidate_ids"):
+        return {"ranked_candidate_ids": vote.ranked_candidate_ids}
+    return {}
+
+def handle_different_vote_types_dict(vote):
+    if "candidate_id" in vote:
+        return {"candidate_id": vote["candidate_id"]}
+    elif "ranked_candidate_ids" in vote:
+        return {"ranked_candidate_ids": vote["ranked_candidate_ids"]}
+    return {}
+
 blockchain_bp = Blueprint("blockchain", __name__)
 @blockchain_bp.route("/explorer")
 @login_required
@@ -20,12 +35,20 @@ def get_chain():
             anonymous_votes = []
             for vote in block["votes"]:
                 anonymous_vote = {
-                    "candidate_id": vote["candidate_id"],
                     "election_id": vote["election_id"],
                     "timestamp": vote["timestamp"],
                     "vote_hash": vote["vote_hash"],
                     "voter_id_hidden": True
                 }
+                # handles different vote types (can be done by this function or the code commented below)
+                candidate_id = handle_different_vote_types_dict(vote)
+                anonymous_vote.update(candidate_id)
+
+                # if "candidate_id" in vote:
+                #     anonymous_vote["candidate_id"] = vote["candidate_id"]
+                # elif "ranked_candidate_ids" in vote:
+                #     anonymous_vote["ranked_candidate_ids"] = vote["ranked_candidate_ids"]
+
                 anonymous_votes.append(anonymous_vote)
             anonymous_block["votes"] = anonymous_votes
             anonymous_chain.append(anonymous_block)
@@ -55,12 +78,15 @@ def get_block(block_index):
             anonymous_votes = []
             for vote in block_data["votes"]:
                 anonymous_vote = {
-                    "candidate_id": vote["candidate_id"],
                     "election_id": vote["election_id"],
                     "timestamp": vote["timestamp"],
                     "vote_hash": vote["vote_hash"],
                     "voter_id_hidden": True
                 }
+                # refer to get_chain for explanation
+                candidate_id = handle_different_vote_types_dict(vote)
+                anonymous_vote.update(candidate_id)
+
                 anonymous_votes.append(anonymous_vote)
             block_data["votes"] = anonymous_votes
             block_data["anonymous_view"] = True
@@ -98,11 +124,15 @@ def validate_vote():
                     vote_found = True
                     vote_details = {
                         "block_index": block_index,
-                        "candidate_id": vote.candidate_id,
                         "timestamp": vote.timestamp,
                         "vote_hash": vote.vote_hash,
                         "block_hash": block.hash
                     }
+
+                    # refer to get_chain for explanation
+                    candidate_id = handle_different_vote_types_object(vote)
+                    vote_details.update(candidate_id)
+
                     break
             if vote_found:
                 break
@@ -114,11 +144,15 @@ def validate_vote():
                     vote_found = True
                     vote_details = {
                         "block_index": "Pending",
-                        "candidate_id": vote.candidate_id,
                         "timestamp": vote.timestamp,
                         "vote_hash": vote.vote_hash,
                         "block_hash": "Pending"
                     }
+
+                    # refer to get_chain for explanation
+                    candidate_id = handle_different_vote_types_object(vote)
+                    vote_details.update(candidate_id)
+
                     break
         response_data = {"vote_found": vote_found}
         if vote_details:

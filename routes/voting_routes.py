@@ -4,7 +4,9 @@ from models.user import User
 from models.election import Election
 from models.candidate import Candidate
 from models.vote_record import VoteRecord
-from blockchain_logic.vote import Vote
+#from blockchain_logic.vote import Vote
+from blockchain_logic.vote_builder import VoteBuilder
+from blockchain_logic.results_calculator import ResultsCalculator
 from database import db
 from datetime import datetime, timezone
 import json
@@ -73,28 +75,22 @@ def voting_page(election_id):
         election_id=election_id
     ).all()
 
-    return render_template("vote.html", election = election, candidates = candidates)
+    if election.is_ranked_choice():
+        return render_template("vote_ranked.html", election = election, candidates = candidates)
+    else:
+        return render_template("vote.html", election = election, candidates = candidates)
 
 
 @voting_bp.route("/submit_vote", methods=["POST"])
 @login_required
 def submit_vote():
     election_id = request.form.get("election_id", type=int)
-    candidate_id = request.form.get("candidate_id", type=int)
 
-    if not election_id or not candidate_id:
+    if not election_id:
         flash("Invalid submission.", "error")
         return redirect(url_for("voting.dashboard"))
 
     election = Election.query.get_or_404(election_id)
-    candidate = Candidate.query.filter_by(
-        id=candidate_id,
-        election_id=election_id
-    ).first()
-
-    if not candidate:
-        flash("Invalid candidate selection.", "error")
-        return redirect(url_for("voting.voting_page", election_id=election_id))
 
     existing_vote = VoteRecord.query.filter_by(
         voter_id=current_user.voter_id,
@@ -105,15 +101,52 @@ def submit_vote():
         flash("You have already voted in this election.", "error")
         return redirect(url_for("voting.dashboard"))
 
-    # uses blockchain.py imported from folder blockchain_logic to cast vote
     try:
-        print("DEBUG: Creating blockchain vote")
-        bc_vote = Vote(
-            voter_id=current_user.voter_id,
-            election_id=election_id,
-            candidate_id=candidate_id
-        )
-        print(f"DEBUG: Blockchain vote created - valid: {bc_vote.is_valid()}")
+        if election.is_standard_choice():
+            # standard vote processing
+            candidate_id = request.form.get("candidate_id", type=int)
+
+            if not candidate_id:
+                flash("Invalid submission.", "error")
+                return redirect(url_for("voting.dashboard"))
+
+            bc_vote = VoteBuilder.create_vote(
+                vote_type="standard",
+                voter_id=current_user.voter_id,
+                election_id=election_id,
+                vote_data=candidate_id
+            )
+
+        elif election.is_ranked_choice():
+            # ranked vote processing
+            ranked_candidates = []
+            max_rank = len(election.candidates)
+
+            for rank in range(1, max_rank + 1):
+                candidate_id = request.form.get(f"ranked_{rank}", type=int)
+                if candidate_id:
+                    ranked_candidates.append(candidate_id)
+
+            if not ranked_candidates:
+                flash("You must rank at least one candidate.", "error")
+                return redirect(url_for("voting.voting_page", election_id=election_id))
+
+            # validate all candidates exist in this election
+            candidate_ids = {c.id for c in election.candidates}
+            if not all(cid in candidate_ids for cid in ranked_candidates):
+                flash("Invalid candidate selection.", "error")
+                return redirect(url_for("voting.voting_page", election_id=election_id))
+
+            bc_vote = VoteBuilder.create_vote(
+                vote_type="ranked",
+                voter_id=current_user.voter_id,
+                election_id=election_id,
+                vote_data=ranked_candidates
+            )
+
+        else:
+            flash("Unkown election type.", "error")
+            return redirect(url_for("voting.dashboard"))
 
         print("DEBUG: Adding vote to blockchain")
         current_app.blockchain.add_vote(bc_vote) #adds vote to blockchain
@@ -128,7 +161,7 @@ def submit_vote():
         db.session.commit()
         print("DEBUG: Vote record created successfully")
 
-        flash(f"Vote submitted for {candidate.name}", "success")
+        flash(f"Vote submitted", "success")
 
     except ValueError as e:
         print(f"DEBUG: ValueError occured: {str(e)}")
@@ -159,28 +192,53 @@ def results(election_id):
     ).all()
 
     blockchain_results = current_app.blockchain.get_results()
-    election_results = blockchain_results.get(election_id, {})
+    election_results = blockchain_results.get(election_id, [])
 
-    results_data = []
-    total_votes = sum(election_results.values())
-
-    for candidate in candidates:
-        vote_count = election_results.get(candidate.id, 0)
-        percentage = (vote_count / total_votes * 100) if total_votes > 0 else 0
-        results_data.append({
-            "candidate": candidate,
-            "votes": vote_count,
-            "percentage": round(percentage, 2)
-        })
-
-    results_data.sort(key=vote_key, reverse=True) # referencing to vote_key function defined above
-
-    return render_template(
-        "results.html",
-        election=election,
-        results=results_data,
-        total_votes=total_votes
+    calculator = ResultsCalculator.create_calculator(
+        vote_type=election.vote_type,
+        election_id=election_id,
+        votes=election_results,
+        candidates=candidates
     )
+    calculation_result = calculator.calculate_results()
+
+    if election.is_standard_choice():
+        vote_counts = calculation_result["vote_counts"]
+        total_votes = sum(vote_counts.values())
+
+        results_data = []
+        for candidate in candidates:
+            vote_count = vote_counts.get(candidate.id, 0)
+            percentage = (vote_count / total_votes * 100) if total_votes > 0 else 0
+            results_data.append({
+                "candidate": candidate,
+                "votes": vote_count,
+                "percentage": round(percentage, 2)
+            })
+
+        results_data.sort(key=vote_key, reverse=True) # referencing to vote_key function defined above
+
+        return render_template(
+            "results.html",
+            election=election,
+            results=results_data,
+            total_votes=total_votes,
+            winner_data = calculation_result["winner_data"]
+        )
+
+    elif election.is_ranked_choice():
+        rounds = calculation_result["vote_counts"]["rounds"]
+        winner_data = calculation_result["winner_data"]
+
+        return render_template(
+            "results_ranked.html",
+            election=election,
+            candidates=candidates,
+            rounds=rounds,
+            winner_data=winner_data,
+            total_votes=calculation_result["total_votes"]
+        )
+
 
 #admin routes below:
 
@@ -254,9 +312,14 @@ def create_election():
         name = request.form.get("name")
         start_date_str = request.form.get("start_date")
         end_date_str = request.form.get("end_date")
+        vote_type = request.form.get("vote_type", "standard")
 
-        if not name or not start_date_str:
+        if not name or not start_date_str or not vote_type:
             flash("Please fill in all required fields.", "error")
+            return render_template("create_election.html")
+
+        if vote_type not in VoteBuilder.get_supported_vote_types():
+            flash("Invalid vote type selected.", "error")
             return render_template("create_election.html")
 
         try:
@@ -265,10 +328,10 @@ def create_election():
             if end_date_str:
                 end_date = datetime.fromisoformat(end_date_str).replace(tzinfo=timezone.utc)
 
-            election = Election(name=name, start_date=start_date, end_date=end_date)
+            election = Election(name=name, start_date=start_date, end_date=end_date, vote_type=vote_type)
             db.session.add(election)
             db.session.commit()
-            flash("Election created.", "success")
+            flash(f"Election created with {vote_type} voting.", "success")
             return redirect(url_for("voting.admin_elections"))
 
         except Exception as e:
@@ -335,15 +398,29 @@ def debug_blockchain():
             "candidate_id": vote.candidate_id
         })
 
+        if hasattr(vote, "candidate_id"):
+            debug_info["candidate_id"] = vote.candidate_id
+        elif hasattr(vote, "ranked_candidate_ids"):
+            debug_info["ranked_candidate_ids"] = vote.ranked_candidate_ids
+
+        debug_info["pending_votes"].append(debug_info)
+
     # shows all votes in all blocks
     for i, block in enumerate(blockchain.chain):
         block_votes = []
         for vote in block.votes:
-            block_votes.append({
+            vote_info = {
                 "voter_id": vote.voter_id,
                 "election_id": vote.election_id,
-                "candidate_id": vote.candidate_id
-            })
+                "vote_type": vote.get_vote_type()
+            }
+            if hasattr(vote, "candidate_id"):
+                vote_info["candidate_id"] = vote.candidate_id
+            elif hasattr(vote, "ranked_candidate_ids"):
+                vote_info["ranked_candidate_ids"] = vote.ranked_candidate_ids
+
+            block_votes.append(vote_info)
+
         debug_info["all_blocks_votes"].append({
             "block_index": i,
             "votes": block_votes

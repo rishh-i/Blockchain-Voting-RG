@@ -19,6 +19,20 @@
                                placeholder="e.g., University Summer Clubs" required>
                     </div>
 
+                    <!--Vote Type Selection -->
+                    <div class="mb-4">
+                        <label for="vote_type" class="form-label fw-bold">
+                            <span class="text-danger">*</span> Voting System
+                        </label>
+                        <select class="form-select form-control-lg" id="vote_type" name="vote_type" required>
+                            <option value="standard" selected>Standard Voting</option>
+                            <option value="ranked">Ranked Choice Voting</option>
+                        </select>
+                        <div class="form-text" id="vote-type-description">
+                            Standard voting: Each voter selects one candidate.
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-4">
@@ -40,12 +54,11 @@
                         </div>
                     </div>
 
-                    <div class="alert alert-info">
-                        <h6 class="alert-heading">ℹ️ Important Notes</h6>
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">Important Notes</h6>
                         <ul class="mb-0">
                             <li>All times are in UTC timezone</li>
                             <li>You can add candidates after creating the election</li>
-                            <li>Election details cannot be modified once created</li>
                             <li>Votes will be securely recorded on the blockchain</li>
                         </ul>
                     </div>
@@ -94,7 +107,7 @@
 </div>
 
 <style>
-.form-control:focus {
+.form-control:focus, .form-select:focus {
     border-color: #28a745;
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
@@ -116,19 +129,49 @@ document.addEventListener('DOMContentLoaded', function() {
     const now = new Date();
     const offsetTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     const currentDateTime = offsetTime.toISOString().slice(0, 16);
-    
+
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
-    
+
     startDateInput.min = currentDateTime;
     endDateInput.min = currentDateTime;
-    
+
     // Update end date minimum when start date changes
     startDateInput.addEventListener('change', function() {
         endDateInput.min = this.value;
         if (endDateInput.value && endDateInput.value < this.value) {
             endDateInput.value = '';
         }
+    });
+
+    // Vote type description
+    const voteTypeSelect = document.getElementById('vote_type');
+    const descriptionDiv = document.getElementById('vote-type-description');
+    const infoDiv = document.getElementById('voting-system-info');
+
+    const descriptions = {
+        standard: 'Standard voting: Each voter selects one candidate.',
+        ranked: 'Ranked choice voting: Voters rank candidates by preference.'
+    };
+
+    const infoContent = {
+        standard: `
+            <p class="mb-2"><strong>Standard Voting</strong></p>
+            <ul class="mb-0">
+                <li>Each voter selects one candidate</li>
+            </ul>
+        `,
+        ranked: `
+            <p class="mb-2"><strong>Ranked Choice Voting</strong></p>
+            <ul class="mb-0">
+                <li>Voters rank candidates in order of preference</li>
+            </ul>
+        `
+    };
+
+    voteTypeSelect.addEventListener('change', function() {
+        descriptionDiv.textContent = descriptions[this.value];
+        infoDiv.innerHTML = infoContent[this.value];
     });
 });
 </script>

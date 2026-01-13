@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Vote - {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="mb-0">{{ election.name }}</h2>
+                <p class="mb-0 mt-2 opacity-75">Ranked Choice Voting - Drag to rank candidates in order of preference</p>
+            </div>
+
+                <form method="POST" action="{{ url_for('voting.submit_vote') }}"
+                      onsubmit="return validateAndConfirm();">
+                    <input type="hidden" name="election_id" value="{{ election.id }}">
+
+                    <div class="row">
+                        <!-- Ranking Area -->
+                        <div class="col-lg-7">
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">Your Ranking</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="ranking-list" class="ranking-list">
+                                        <div class="text-muted text-center py-5" id="empty-ranking-message">
+                                            Drag candidates from the right to rank them
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Available Candidates -->
+                        <div class="col-lg-5">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">Available Candidates</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="candidate-pool">
+                                        {% for candidate in candidates %}
+                                        <div class="candidate-card draggable" 
+                                             data-candidate-id="{{ candidate.id }}"
+                                             draggable="true">
+                                            <div class="candidate-info">
+                                                <h6 class="mb-1">{{ candidate.name }}</h6>
+                                                {% if candidate.party %}
+                                                    <small class="text-muted">{{ candidate.party }}</small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="drag-handle">
+                                                ⋮⋮
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs for ranking -->
+                    <div id="ranking-inputs"></div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5" id="submit-btn">
+                            Submit Ranked Vote
+                        </button>
+                        <a href="{{ url_for('voting.dashboard') }}" class="btn btn-secondary btn-lg px-5 ms-3">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ranking-list {
+    min-height: 400px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.candidate-card {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    transition: all 0.3s ease;
+}
+
+.candidate-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.candidate-card.dragging {
+    opacity: 0.5;
+}
+
+.candidate-card.in-ranking {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.ranking-position {
+    width: 40px;
+    height: 40px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.drag-handle {
+    color: #6c757d;
+    font-size: 20px;
+    cursor: move;
+}
+
+.candidate-info {
+    flex-grow: 1;
+}
+
+.drop-indicator {
+    height: 4px;
+    background-color: #007bff;
+    margin: 5px 0;
+    border-radius: 2px;
+}
+
+#candidate-pool .candidate-card {
+    cursor: grab;
+}
+
+#candidate-pool .candidate-card:active {
+    cursor: grabbing;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rankingList = document.getElementById('ranking-list');
+    const candidatePool = document.getElementById('candidate-pool');
+    const emptyMessage = document.getElementById('empty-ranking-message');
+    const rankingInputs = document.getElementById('ranking-inputs');
+    
+    let draggedElement = null;
+    let rankedCandidates = [];
+
+    // Drag start
+    document.addEventListener('dragstart', function(e) {
+        if (e.target.classList.contains('draggable')) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+    });
+
+    // Drag end
+    document.addEventListener('dragend', function(e) {
+        if (e.target.classList.contains('draggable')) {
+            e.target.classList.remove('dragging');
+        }
+    });
+
+    // Drag over ranking list
+    rankingList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    // Drop on ranking list
+    rankingList.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (draggedElement) {
+            const candidateId = draggedElement.dataset.candidateId;
+            
+            // Check if already in ranking
+            if (!rankedCandidates.includes(candidateId)) {
+                rankedCandidates.push(candidateId);
+                updateRankingDisplay();
+            }
+        }
+    });
+
+    // Drag over candidate pool
+    candidatePool.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    // Drop on candidate pool (remove from ranking)
+    candidatePool.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (draggedElement && draggedElement.classList.contains('in-ranking')) {
+            const candidateId = draggedElement.dataset.candidateId;
+            rankedCandidates = rankedCandidates.filter(id => id !== candidateId);
+            updateRankingDisplay();
+        }
+    });
+
+    function updateRankingDisplay() {
+        // Clear ranking list
+        rankingList.innerHTML = '';
+        
+        if (rankedCandidates.length === 0) {
+            rankingList.innerHTML = '<div class="text-muted text-center py-5" id="empty-ranking-message">Drag candidates from the right to rank them</div>';
+        } else {
+            rankedCandidates.forEach((candidateId, index) => {
+                const originalCard = document.querySelector(`[data-candidate-id="${candidateId}"]`);
+                const candidateName = originalCard.querySelector('h6').textContent;
+                const candidateParty = originalCard.querySelector('small')?.textContent || '';
+                
+                const rankCard = document.createElement('div');
+                rankCard.className = 'candidate-card draggable in-ranking';
+                rankCard.dataset.candidateId = candidateId;
+                rankCard.draggable = true;
+                rankCard.innerHTML = `
+                    <div class="ranking-position">${index + 1}</div>
+                    <div class="candidate-info">
+                        <h6 class="mb-1">${candidateName}</h6>
+                        ${candidateParty ? `<small class="text-muted">${candidateParty}</small>` : ''}
+                    </div>
+                    <div class="drag-handle">⋮⋮</div>
+                `;
+                rankingList.appendChild(rankCard);
+            });
+        }
+        
+        updateHiddenInputs();
+    }
+
+    function updateHiddenInputs() {
+        // Clear existing inputs
+        rankingInputs.innerHTML = '';
+        
+        // Create hidden input for each ranked candidate
+        rankedCandidates.forEach((candidateId, index) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `ranked_${index + 1}`;
+            input.value = candidateId;
+            rankingInputs.appendChild(input);
+        });
+    }
+
+    // Make ranking list sortable by drag and drop
+    rankingList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(rankingList, e.clientY);
+        const dragging = document.querySelector('.dragging');
+        
+        if (dragging && dragging.classList.contains('in-ranking')) {
+            if (afterElement == null) {
+                rankingList.appendChild(dragging);
+            } else {
+                rankingList.insertBefore(dragging, afterElement);
+            }
+            updateRankingOrder();
+        }
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updateRankingOrder() {
+        const cards = rankingList.querySelectorAll('.candidate-card');
+        rankedCandidates = Array.from(cards).map(card => card.dataset.candidateId);
+        updateRankingDisplay();
+    }
+
+    window.validateAndConfirm = function() {
+        if (rankedCandidates.length === 0) {
+            alert('You must rank at least one candidate before submitting.');
+            return false;
+        }
+        
+        const message = `You are about to submit your ranked vote:\n\n` +
+            rankedCandidates.map((id, index) => {
+                const card = document.querySelector(`[data-candidate-id="${id}"]`);
+                const name = card.querySelector('h6').textContent;
+                return `${index + 1}. ${name}`;
+            }).join('\n') +
+            `\n\nThis action cannot be undone. Continue?`;
+        
+        return confirm(message);
+    };
+});
+</script>
+{% endblock %}

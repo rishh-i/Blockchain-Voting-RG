@@ -9,6 +9,7 @@ class Election(Base):
     name = db.Column(db.String(100), nullable=False)
     start_date = db.Column(db.DateTime, default=get_current_utc)
     end_date = db.Column(db.DateTime, nullable=True)
+    vote_type = db.Column(db.String(50), default="standard", nullable=False)
 
     # one-to-many relationship between Election and Candidate
     candidates = db.relationship("Candidate", back_populates="election", cascade="all, delete-orphan")
@@ -28,6 +29,12 @@ class Election(Base):
         if self.end_date.tzinfo is None:
             return self.end_date.replace(tzinfo=timezone.utc)
         return self.end_date
+
+    def is_ranked_choice(self):
+        return self.vote_type == "ranked"
+
+    def is_standard_choice(self):
+        return self.vote_type == "standard"
 
     def __repr__(self):
         return f"<Election {self.name}>"

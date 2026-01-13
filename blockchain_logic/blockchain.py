@@ -1,9 +1,9 @@
 from .hash_table import HashTable
 from threading import Lock
 from blockchain_logic.block import Block
+from blockchain_logic.vote_builder import VoteBuilder
 import os
 import json
-from blockchain_logic.vote import Vote
 
 class Blockchain:
     def __init__(self, blockchain_file="blockchain.json"):
@@ -28,14 +28,22 @@ class Blockchain:
         return self.chain[-1]
 
     def add_vote(self, vote):
-        # adds and validates a vote before adding it to the pending votes
+        """
+        adds and validates a vote before adding it to the pending votes
+        takes an AbstractVote subclass instance as input
+        """
 
         with self.chain_lock:
-            print(f"DEBUG: Adding vote voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
+            #print(f"DEBUG: Adding vote voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
 
             if not vote.is_valid():
                 # is_valid is a method from the Vote class which checks hash of block
                 raise ValueError("Invalid vote")
+
+            try:
+                vote.validate_vote_data()
+            except ValueError as e:
+                raise ValueError(f"Invalid vote data: {str(e)}")
 
             if self.__multiple_votes(vote):
                 raise ValueError("Voter has already voted")
@@ -52,8 +60,10 @@ class Blockchain:
                 print(f"DEBUG: Block size not reached ({len(self.pending_votes)}/{self.block_size})")
 
     def __multiple_votes(self, vote):
-        # checks if a voter has already voted via the hash table
-        # hash table only stores if a voter has voted in an election, NOT the actual details
+        """
+        checks if a voter has already voted via the hash table
+        hash table only stores if a voter has voted in an election, NOT the actual details
+        """
         return f"{vote.voter_id}_{vote.election_id}" in self.vote_registry
 
     def __add_pending_votes(self):
@@ -100,22 +110,20 @@ class Blockchain:
         for block in self.chain:
             for vote in block.votes:
                 election_id = vote.election_id
-                candidate_id = vote.candidate_id
 
                 if election_id not in results:
-                    results[election_id] = {}
+                    results[election_id] = []
 
-                results[election_id][candidate_id] = results[election_id].get(candidate_id, 0) + 1 # increments the vote count for the candidate, or starts at 0 if candidate_id not found
+                results[election_id].append(vote)
 
         # we also need to count the votes that are pending in the current block
         for vote in self.pending_votes:
             election_id = vote.election_id
-            candidate_id = vote.candidate_id
 
             if election_id not in results:
-                results[election_id] = {}
+                results[election_id] = []
 
-            results[election_id][candidate_id] = results[election_id].get(candidate_id, 0) + 1
+            results[election_id].append(vote)
 
         return results
 
@@ -153,13 +161,7 @@ class Blockchain:
                 for block_data in blockchain_data.get("chain", []):
                     votes = []
                     for vote_data in block_data.get("votes", []):
-                        vote = Vote(
-                            voter_id=vote_data["voter_id"],
-                            election_id=vote_data["election_id"],
-                            candidate_id=vote_data["candidate_id"],
-                        )
-                        vote.timestamp = vote_data["timestamp"]
-                        vote.vote_hash = vote_data["vote_hash"]
+                        vote = VoteBuilder.from_dict(vote_data)
                         votes.append(vote)
                         self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
 
@@ -174,13 +176,7 @@ class Blockchain:
                     self.chain.append(block)
 
                 for vote_data in blockchain_data.get("pending_votes", []):
-                    vote = Vote(
-                        voter_id=vote_data["voter_id"],
-                        election_id=vote_data["election_id"],
-                        candidate_id=vote_data["candidate_id"],
-                    )
-                    vote.timestamp = vote_data["timestamp"]
-                    vote.vote_hash = vote_data["vote_hash"]
+                    vote = VoteBuilder.from_dict(vote_data)
                     self.pending_votes.append(vote)
                     self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
                 print(f"DEBUG: Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes not yet mined/added.")

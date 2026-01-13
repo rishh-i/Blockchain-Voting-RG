@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Results - {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white text-center">
+                <h2 class="mb-0">{{ election.name }} - Results</h2>
+                <p class="mb-0 mt-2 opacity-75"></p>
+            </div>
+            <div class="card-body">
+                {% if winner_data and winner_data.winner_id %}
+                    <div class="alert alert-success text-center mb-4">
+                        <h3 class="alert-heading">Winner</h3>
+                        {% for candidate in candidates %}
+                            {% if candidate.id == winner_data.winner_id %}
+                                <h2 class="mb-2">{{ candidate.name }}</h2>
+                                {% if candidate.party %}
+                                    <p class="mb-0">{{ candidate.party }}</p>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Round-by-Round Results -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Round Breakdown</h4>
+                        </div>
+                        <div class="card-body">
+                            {% for round_counts in rounds %}
+                            <div class="round-section mb-4">
+                                <h5 class="text-primary">Round {{ loop.index }}</h5>
+                                
+                                {% set round_total = round_counts.values()|sum %}
+                                {% set sorted_candidates = round_counts.items()|sort(attribute='1', reverse=True) %}
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Candidate</th>
+                                                <th>Votes</th>
+                                                <th>Percentage</th>
+                                                <th>Visual</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for candidate_id, votes in sorted_candidates %}
+                                            {% set candidate = candidates|selectattr('id', 'equalto', candidate_id)|first %}
+                                            {% set percentage = (votes / round_total * 100) if round_total > 0 else 0 %}
+                                            {% set is_eliminated = loop.last and loop.index < rounds|length %}
+                                            {% set is_winner = loop.first and loop.index == rounds|length and percentage > 50 %}
+                                            
+                                            <tr class="{% if is_winner %}table-success{% elif is_eliminated %}table-danger{% endif %}">
+                                                <td>
+                                                    <strong>{{ candidate.name }}</strong>
+                                                    {% if candidate.party %}
+                                                        <br><small class="text-muted">{{ candidate.party }}</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="fw-bold">{{ votes }}</td>
+                                                <td>{{ "%.1f"|format(percentage) }}%</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px; width: 150px;">
+                                                        <div class="progress-bar {% if is_winner %}bg-success{% elif is_eliminated %}bg-danger{% else %}bg-primary{% endif %}"
+                                                             role="progressbar"
+                                                             style="width: {{ percentage }}%"
+                                                             aria-valuenow="{{ percentage }}"
+                                                             aria-valuemin="0"
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if is_winner %}
+                                                        <span class="badge bg-success">Winner</span>
+                                                    {% elif is_eliminated %}
+                                                        <span class="badge bg-danger">Eliminated</span>
+                                                    {% elif percentage > 50 %}
+                                                        <span class="badge bg-success">Majority</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Active</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="small text-muted">
+                                    Total votes this round: {{ round_total }}
+                                    {% if loop.index < rounds|length %}
+                                        {% set next_round = rounds[loop.index] %}
+                                        {% set eliminated_candidate_id = (round_counts.items()|sort(attribute='1')|first)[0] %}
+                                        {% set eliminated_candidate = candidates|selectattr('id', 'equalto', eliminated_candidate_id)|first %}
+                                        | <strong class="text-danger">{{ eliminated_candidate.name }} eliminated</strong> (fewest votes)
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if not loop.last %}
+                                <hr>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Summary Statistics -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3>{{ total_votes }}</h3>
+                                    <p class="mb-0">Total Votes Cast</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3>{{ candidates|length }}</h3>
+                                    <p class="mb-0">Total Candidates</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3>{{ rounds|length }}</h3>
+                                    <p class="mb-0">Rounds to Declare Winner</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="display-1 text-muted"></div>
+                        <h4 class="text-muted">No votes recorded yet</h4>
+                        <p class="text-muted">Results will appear here once voting begins.</p>
+                    </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('voting.dashboard') }}" class="btn btn-primary">
+                        ← Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
+                        View on Blockchain
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Election Information -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Election Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Election Name:</strong> {{ election.name }}<br>
+                        <strong>Voting System:</strong> Ranked Choice (Instant Runoff)<br>
+                        <strong>Start Date:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}<br>
+                        {% if election.end_date %}
+                            <strong>End Date:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                        {% else %}
+                            <strong>End Date:</strong> <span class="text-muted">No end date set</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-light mb-0">
+                            <h6 class="alert-heading">Blockchain Security</h6>
+                            <p class="mb-0 small">
+                                All ranked votes are recorded on the blockchain with cryptographic hashing.
+                                Results are transparent and verifiable.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
