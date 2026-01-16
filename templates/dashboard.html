@@ -32,14 +32,17 @@
                         <div class="col-md-6 mb-3">
                             <div class="card border-primary">
                                 <div class="card-body">
-                                    <h5 class="card-title text-primary">{{ election.name }}</h5>
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title text-primary mb-0">{{ election.name }}</h5>
+                                        <span class="badge bg-primary">ID: {{ election.id }}</span>
+                                    </div>
                                     <p class="card-text">
                                         <small class="text-muted">
-                                            Started: {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                            <strong>Started:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}
                                             {% if election.end_date %}
-                                                <br>Ends: {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                                <br><strong>Ends:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
                                             {% else %}
-                                                <br>No end date set
+                                                <br><strong>Ends:</strong> No end date set
                                             {% endif %}
                                         </small>
                                     </p>
@@ -95,7 +98,6 @@
                 <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary mb-2 w-100">
                     View Blockchain
                 </a>
-                <!-- i deleted the admin button here -->
                 <small class="text-muted d-block mt-2">
                     Verify your votes and view the transparent ledger
                 </small>
@@ -116,6 +118,7 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>Election ID</th>
                                 <th>Election Name</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
@@ -126,6 +129,7 @@
                         <tbody>
                             {% for election in active_elections %}
                             <tr>
+                                <td><span class="badge bg-primary">ID: {{ election.id }}</span></td>
                                 <td class="fw-bold">{{ election.name }}</td>
                                 <td>{{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}</td>
                                 <td>
@@ -160,4 +164,58 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Past Elections Section -->
+{% if past_elections %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Past Elections</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Election ID</th>
+                                <th>Election Name</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Participation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for election in past_elections %}
+                            <tr>
+                                <td><span class="badge bg-secondary">ID: {{ election.id }}</span></td>
+                                <td class="fw-bold">{{ election.name }}</td>
+                                <td>{{ election.start_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ election.end_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if election in available_elections %}
+                                        <span class="badge bg-warning">Didn't Vote</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Voted</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('voting.results', election_id=election.id) }}"
+                                       class="btn btn-sm btn-outline-secondary">View Results</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted">
+                    These elections have ended. You can view results but cannot vote.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

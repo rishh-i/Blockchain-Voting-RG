@@ -44,7 +44,6 @@
                                                 <th>Candidate</th>
                                                 <th>Votes</th>
                                                 <th>Percentage</th>
-                                                <th>Visual</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -54,7 +53,7 @@
                                             {% set percentage = (votes / round_total * 100) if round_total > 0 else 0 %}
                                             {% set is_eliminated = loop.last and loop.index < rounds|length %}
                                             {% set is_winner = loop.first and loop.index == rounds|length and percentage > 50 %}
-                                            
+
                                             <tr class="{% if is_winner %}table-success{% elif is_eliminated %}table-danger{% endif %}">
                                                 <td>
                                                     <strong>{{ candidate.name }}</strong>
@@ -64,17 +63,6 @@
                                                 </td>
                                                 <td class="fw-bold">{{ votes }}</td>
                                                 <td>{{ "%.1f"|format(percentage) }}%</td>
-                                                <td>
-                                                    <div class="progress" style="height: 20px; width: 150px;">
-                                                        <div class="progress-bar {% if is_winner %}bg-success{% elif is_eliminated %}bg-danger{% else %}bg-primary{% endif %}"
-                                                             role="progressbar"
-                                                             style="width: {{ percentage }}%"
-                                                             aria-valuenow="{{ percentage }}"
-                                                             aria-valuemin="0"
-                                                             aria-valuemax="100">
-                                                        </div>
-                                                    </div>
-                                                </td>
                                                 <td>
                                                     {% if is_winner %}
                                                         <span class="badge bg-success">Winner</span>
@@ -91,7 +79,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                
+
                                 <div class="small text-muted">
                                     Total votes this round: {{ round_total }}
                                     {% if loop.index < rounds|length %}
@@ -102,7 +90,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            
+
                             {% if not loop.last %}
                                 <hr>
                             {% endif %}
@@ -148,7 +136,7 @@
 
                 <div class="text-center mt-4">
                     <a href="{{ url_for('voting.dashboard') }}" class="btn btn-primary">
-                        ← Back to Dashboard
+                        Back to Dashboard
                     </a>
                     <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
                         View on Blockchain
@@ -165,6 +153,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
+                        <strong>Election ID:</strong> <span class="badge bg-secondary">{{ election.id }}</span><br>
                         <strong>Election Name:</strong> {{ election.name }}<br>
                         <strong>Voting System:</strong> Ranked Choice (Instant Runoff)<br>
                         <strong>Start Date:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}<br>
