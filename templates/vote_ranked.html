@@ -32,7 +32,6 @@
                             </div>
                         </div>
 
-                        <!-- Available Candidates -->
                         <div class="col-lg-5">
                             <div class="card">
                                 <div class="card-header bg-secondary text-white">
@@ -61,7 +60,6 @@
                         </div>
                     </div>
 
-                    <!-- Hidden inputs for ranking -->
                     <div id="ranking-inputs"></div>
 
                     <div class="text-center mt-4">
@@ -77,81 +75,6 @@
         </div>
     </div>
 </div>
-
-<style>
-.ranking-list {
-    min-height: 400px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-.candidate-card {
-    background: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: move;
-    transition: all 0.3s ease;
-}
-
-.candidate-card:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.candidate-card.dragging {
-    opacity: 0.5;
-}
-
-.candidate-card.in-ranking {
-    border-color: #28a745;
-    background-color: #f8fff9;
-}
-
-.ranking-position {
-    width: 40px;
-    height: 40px;
-    background: #28a745;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    margin-right: 15px;
-    flex-shrink: 0;
-}
-
-.drag-handle {
-    color: #6c757d;
-    font-size: 20px;
-    cursor: move;
-}
-
-.candidate-info {
-    flex-grow: 1;
-}
-
-.drop-indicator {
-    height: 4px;
-    background-color: #007bff;
-    margin: 5px 0;
-    border-radius: 2px;
-}
-
-#candidate-pool .candidate-card {
-    cursor: grab;
-}
-
-#candidate-pool .candidate-card:active {
-    cursor: grabbing;
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
@@ -165,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let draggedElement = null;
     let rankedCandidates = [];
 
-    // Drag start
     document.addEventListener('dragstart', function(e) {
         if (e.target.classList.contains('draggable')) {
             draggedElement = e.target;
@@ -173,25 +95,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Drag end
     document.addEventListener('dragend', function(e) {
         if (e.target.classList.contains('draggable')) {
             e.target.classList.remove('dragging');
         }
     });
 
-    // Drag over ranking list
     rankingList.addEventListener('dragover', function(e) {
         e.preventDefault();
     });
 
-    // Drop on ranking list
     rankingList.addEventListener('drop', function(e) {
         e.preventDefault();
         if (draggedElement) {
             const candidateId = draggedElement.dataset.candidateId;
-            
-            // Check if already in ranking
+
             if (!rankedCandidates.includes(candidateId)) {
                 rankedCandidates.push(candidateId);
                 updateRankingDisplay();
@@ -199,12 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Drag over candidate pool
     candidatePool.addEventListener('dragover', function(e) {
         e.preventDefault();
     });
 
-    // Drop on candidate pool (remove from ranking)
     candidatePool.addEventListener('drop', function(e) {
         e.preventDefault();
         if (draggedElement && draggedElement.classList.contains('in-ranking')) {
@@ -215,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateRankingDisplay() {
-        // Clear ranking list
         rankingList.innerHTML = '';
         
         if (rankedCandidates.length === 0) {
@@ -246,10 +161,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateHiddenInputs() {
-        // Clear existing inputs
         rankingInputs.innerHTML = '';
-        
-        // Create hidden input for each ranked candidate
+
         rankedCandidates.forEach((candidateId, index) => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -259,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Make ranking list sortable by drag and drop
     rankingList.addEventListener('dragover', function(e) {
         e.preventDefault();
         const afterElement = getDragAfterElement(rankingList, e.clientY);

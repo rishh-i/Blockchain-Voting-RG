@@ -19,7 +19,6 @@
                                placeholder="e.g., University Summer Clubs" required>
                     </div>
 
-                    <!--Vote Type Selection -->
                     <div class="mb-4">
                         <label for="vote_type" class="form-label fw-bold">
                             <span class="text-danger">*</span> Voting System
@@ -105,27 +104,11 @@
         </div>
     </div>
 </div>
-
-<style>
-.form-control:focus, .form-select:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.form-control-lg {
-    border-radius: 10px;
-}
-
-.card {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set minimum date to current date/time
     const now = new Date();
     const offsetTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     const currentDateTime = offsetTime.toISOString().slice(0, 16);
@@ -136,7 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
     startDateInput.min = currentDateTime;
     endDateInput.min = currentDateTime;
 
-    // Update end date minimum when start date changes
     startDateInput.addEventListener('change', function() {
         endDateInput.min = this.value;
         if (endDateInput.value && endDateInput.value < this.value) {
@@ -144,34 +126,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Vote type description
     const voteTypeSelect = document.getElementById('vote_type');
     const descriptionDiv = document.getElementById('vote-type-description');
-    const infoDiv = document.getElementById('voting-system-info');
 
     const descriptions = {
         standard: 'Standard voting: Each voter selects one candidate.',
         ranked: 'Ranked choice voting: Voters rank candidates by preference.'
     };
 
-    const infoContent = {
-        standard: `
-            <p class="mb-2"><strong>Standard Voting</strong></p>
-            <ul class="mb-0">
-                <li>Each voter selects one candidate</li>
-            </ul>
-        `,
-        ranked: `
-            <p class="mb-2"><strong>Ranked Choice Voting</strong></p>
-            <ul class="mb-0">
-                <li>Voters rank candidates in order of preference</li>
-            </ul>
-        `
-    };
-
     voteTypeSelect.addEventListener('change', function() {
         descriptionDiv.textContent = descriptions[this.value];
-        infoDiv.innerHTML = infoContent[this.value];
     });
 });
 </script>

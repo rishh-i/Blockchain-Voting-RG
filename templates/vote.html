@@ -86,36 +86,6 @@
         </div>
     </div>
 </div>
-
-<style>
-.candidate-card {
-    transition: all 0.3s ease;
-    border: 2px solid #e9ecef;
-}
-
-.candidate-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    border-color: #007bff;
-}
-
-.candidate-card.selected {
-    border-color: #28a745;
-    background-color: #f8fff9;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2);
-}
-
-.candidate-radio {
-    transform: scale(1.5);
-    margin-bottom: 10px;
-}
-
-.candidate-info {
-    pointer-events: none;
-}
-</style>
-
 {% endblock %}
 
 {% block scripts %}
@@ -125,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const candidateRadios = document.querySelectorAll('.candidate-radio');
     const submitBtn = document.getElementById('submit-btn');
 
-    // Handle card clicks
     candidateCards.forEach(card => {
         card.addEventListener('click', function() {
             const radio = this.querySelector('.candidate-radio');
@@ -134,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handle radio button changes
     candidateRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             updateSelection();

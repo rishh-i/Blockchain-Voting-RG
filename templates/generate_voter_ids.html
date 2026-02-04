@@ -15,14 +15,14 @@
 
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"> </h4>
+                <h4 class="mb-0">Generate New Voter IDs</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
                     <div class="row align-items-end">
                         <div class="col-md-8">
                             <label for="count" class="form-label fw-bold">Number of Voter IDs to Generate</label>
-                            <input type="number" class="form-control form-control-lg" id="count" name="count" 
+                            <input type="number" class="form-control form-control-lg" id="count" name="count"
                                    min="1" max="100" value="1" required>
                             <div class="form-text">Generate between 1 and 100 voter IDs</div>
                         </div>
@@ -52,9 +52,9 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-success">
-                    <strong>Success!</strong> {{ generated_ids|length }} voter IDs have been generated.
+                    <strong>✓ Success!</strong> {{ generated_ids|length }} voter IDs have been generated.
                 </div>
-                
+
                 <div class="mb-3">
                     <button class="btn btn-outline-primary" onclick="copyAllIDs()">
                         Copy All IDs to Clipboard
@@ -70,9 +70,9 @@
                         <div class="card border-success">
                             <div class="card-body p-2 d-flex justify-content-between align-items-center">
                                 <code class="voter-id-text">{{ voter_id }}</code>
-                                <button class="btn btn-sm btn-outline-primary" 
+                                <button class="btn btn-sm btn-outline-primary"
                                         onclick="copyToClipboard('{{ voter_id }}', this)">
-                                    📋
+                                    Copy
                                 </button>
                             </div>
                         </div>
@@ -86,50 +86,23 @@
         </div>
         {% endif %}
 
-        <!-- Authorised IDs -->
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Authorised IDs</h4>
+                <h4 class="mb-0">Authorised Voter IDs</h4>
             </div>
-
-            <div class="mb-3">
-            <button class="btn btn-outline-primary" onclick="copyAllAuthIDs()">
-                Copy All IDs to Clipboard
-            </button>
-            <button class="btn btn-outline-success" onclick="downloadAuthIDs()">
-                Download as Text File
-            </button>
-        </div>
-
-        <textarea id="authIdsText" style="display:none;">{% for v in all_authorised_voters %}{{ v.voter_id }}
-        {% endfor %}</textarea>
-
-        <script>
-        function copyAllAuthIDs() {
-            const allIdsText = document.getElementById('authIdsText').value;
-            navigator.clipboard.writeText(allIdsText).then(function() {
-                alert('All authorised voter IDs copied to clipboard!');
-            }).catch(function(err) {
-                alert('Failed to copy: ' + err);
-            });
-        }
-
-        function downloadAuthIDs() {
-            const allIdsText = document.getElementById('authIdsText').value;
-            const blob = new Blob([allIdsText], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'authorised_voter_ids_' + new Date().toISOString().split('T')[0] + '.txt';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-        </script>
-
             <div class="card-body">
-                <!-- html -->
+                <div class="mb-3">
+                    <button class="btn btn-outline-primary" onclick="copyAllAuthIDs()">
+                        Copy All IDs to Clipboard
+                    </button>
+                    <button class="btn btn-outline-success" onclick="downloadAuthIDs()">
+                        Download as Text File
+                    </button>
+                </div>
+
+                <textarea id="authIdsText" style="display:none;">{% for v in all_authorised_voters %}{{ v.voter_id }}
+{% endfor %}</textarea>
+
                 {% if all_authorised_voters %}
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -167,7 +140,6 @@
                         </table>
                     </div>
 
-                    <!-- Statistics -->
                     <div class="row mt-4">
                         <div class="col-md-4">
                             <div class="card bg-primary text-white">
@@ -178,7 +150,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-primary text-white">
+                            <div class="card bg-success text-white">
                                 <div class="card-body text-center">
                                     {% set registered_count = all_authorised_voters|selectattr('is_registered', 'equalto', true)|list|length %}
                                     <h3>{{ registered_count }}</h3>
@@ -187,7 +159,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-primary text-white">
+                            <div class="card bg-warning text-white">
                                 <div class="card-body text-center">
                                     {% set pending_count = all_authorised_voters|selectattr('is_registered', 'equalto', false)|list|length %}
                                     <h3>{{ pending_count }}</h3>
@@ -202,38 +174,10 @@
                         <h4 class="text-muted">No IDs Generated Yet</h4>
                     </div>
                 {% endif %}
-
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.form-control:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.form-control-lg {
-    border-radius: 10px;
-}
-
-.card {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-code.voter-id-text {
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #495057;
-}
-
-.table code {
-    background-color: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 3px;
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
@@ -244,7 +188,7 @@ function copyToClipboard(text, button) {
         button.innerHTML = '✓';
         button.classList.remove('btn-outline-primary');
         button.classList.add('btn-success');
-        
+
         setTimeout(function() {
             button.innerHTML = originalText;
             button.classList.remove('btn-success');
@@ -271,6 +215,28 @@ function downloadIDs() {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'voter_ids_' + new Date().toISOString().split('T')[0] + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function copyAllAuthIDs() {
+    const allIdsText = document.getElementById('authIdsText').value;
+    navigator.clipboard.writeText(allIdsText).then(function() {
+        alert('All authorised voter IDs copied to clipboard!');
+    }).catch(function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+
+function downloadAuthIDs() {
+    const allIdsText = document.getElementById('authIdsText').value;
+    const blob = new Blob([allIdsText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'authorised_voter_ids_' + new Date().toISOString().split('T')[0] + '.txt';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

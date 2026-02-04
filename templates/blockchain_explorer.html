@@ -3,112 +3,6 @@
 {% block title %}Blockchain Explorer - Blockchain Voting System{% endblock %}
 
 {% block content %}
-<style>
-    .block-card {
-        border: 1px solid #ddd;
-        border-radius: 20px;
-        margin-bottom: 20px;
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-    }
-    .vote-item {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 12px;
-        margin: 8px 0;
-        transition: all 0.2s ease;
-    }
-    .vote-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transform: translateY(-1px);
-    }
-    .hash-display {
-        font-family: 'Courier New', monospace;
-        font-size: 0.85em;
-        word-break: break-all;
-        background: #f1f3f4;
-        padding: 8px;
-        border-radius: 10px;
-        border: 2px solid #e9ecef;
-    }
-    .validation-section {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        border: 2px solid #e9ecef;
-    }
-    .validation-result {
-        margin-top: 15px;
-        padding: 15px;
-        border-radius: 10px;
-        animation: fadeIn 0.3s ease;
-        border: none;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .validation-success {
-        background: #d4edda;
-        color: #155724;
-    }
-    .validation-error {
-        background: #f8d7da;
-        color: #721c24;
-    }
-    .anonymous-label {
-        background: #6c757d;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.85em;
-        font-weight: 500;
-    }
-    .genesis-block {
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
-        border: 2px solid #dddddd;
-    }
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #667eea;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .btn-validate {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        padding: 12px;
-        font-weight: bold;
-        border-radius: 10px;
-        transition: transform 0.2s;
-    }
-    .btn-validate:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-    .form-control {
-        border-radius: 10px;
-        border: 2px solid #e9ecef;
-        padding: 12px;
-    }
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-</style>
-
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -119,7 +13,6 @@
     </div>
 </div>
 
-<!-- Vote Validation Section -->
 <div class="validation-section">
     <h4 class="fw-bold text-primary mb-3">Validate Your Vote</h4>
     <p class="text-muted mb-3">Enter the Election ID to verify that your vote is recorded on the blockchain.</p>
@@ -151,7 +44,6 @@
     <div id="validationResult"></div>
 </div>
 
-<!-- Blockchain Status -->
 <div class="mb-4">
     <div class="card border-primary">
         <div class="card-header bg-primary text-white">
@@ -168,7 +60,6 @@
     </div>
 </div>
 
-<!-- Blockchain Blocks -->
 <div class="card border-secondary">
     <div class="card-header bg-secondary text-white">
         <h4 class="mb-0">Blocks</h4>
@@ -332,7 +223,6 @@
         container.innerHTML = html || '<div class="alert alert-info">No blocks found</div>';
     }
 
-    // Vote validation functionality
     document.getElementById('validationForm').addEventListener('submit', function(e) {
         e.preventDefault();
         validateVote();
@@ -403,7 +293,7 @@
 
                 resultDiv.innerHTML = `
                     <div class="validation-result validation-success">
-                        <h5 class="fw-bold mb-3">Vote Successfully Verified</h5>
+                        <h5 class="fw-bold mb-3">✓ Vote Successfully Verified</h5>
                         <div class="row">
                             <div class="col-md-6 mb-2">
                                 <strong>Status:</strong> ${blockStatus}
@@ -450,7 +340,6 @@
         }
     }
 
-    // Auto-refresh blockchain data every 30 seconds
     setInterval(loadBlockchainData, 30000);
 </script>
 {% endblock %}

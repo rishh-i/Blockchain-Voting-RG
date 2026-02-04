@@ -13,14 +13,13 @@
             <div class="card-body">
                 {% if results %}
                     <div class="row">
-                        <!-- Results Chart -->
                         <div class="col-lg-8">
                             {% for result in results %}
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <h5 class="mb-1 {% if loop.first %}text-success{% endif %}">
-                                            {% if loop.first %}{% endif %} {{ result.candidate.name }}
+                                            {% if loop.first %}🏆 {% endif %} {{ result.candidate.name }}
                                         </h5>
                                         {% if result.candidate.party %}
                                             <small class="text-muted">{{ result.candidate.party }}</small>
@@ -47,7 +46,6 @@
                             {% endfor %}
                         </div>
 
-                        <!-- Summary Statistics -->
                         <div class="col-lg-4">
                             <div class="card bg-light">
                                 <div class="card-header">
@@ -81,7 +79,6 @@
                                 </div>
                             </div>
 
-                            <!-- Detailed Results Table -->
                             <div class="card mt-3">
                                 <div class="card-header">
                                     <h6 class="mb-0">Results</h6>
@@ -139,7 +136,6 @@
             </div>
         </div>
 
-        <!-- Election Information -->
         <div class="card mt-4">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">Election Information</h5>
@@ -160,7 +156,7 @@
                             <h6 class="alert-heading">Blockchain Security</h6>
                             <p class="mb-0 small">
                                 All votes are recorded on the blockchain.
-                                Results are transparent and you can verify your vote against the blockchain.
+                                Results can be verified against the blockchain.
                             </p>
                         </div>
                     </div>
@@ -174,13 +170,11 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set progress bar widths using JavaScript to avoid template syntax issues
     const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach(bar => {
         const percentage = bar.getAttribute('data-percentage');
         bar.style.width = percentage + '%';
 
-        // Add minimum width for very small percentages to show some visual feedback
         if (parseFloat(percentage) > 0 && parseFloat(percentage) < 5) {
             bar.style.minWidth = '20px';
         }

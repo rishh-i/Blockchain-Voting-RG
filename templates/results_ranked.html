@@ -8,12 +8,12 @@
         <div class="card">
             <div class="card-header bg-success text-white text-center">
                 <h2 class="mb-0">{{ election.name }} - Results</h2>
-                <p class="mb-0 mt-2 opacity-75"></p>
+                <p class="mb-0 mt-2 opacity-75">Ranked Choice Voting Results</p>
             </div>
             <div class="card-body">
                 {% if winner_data and winner_data.winner_id %}
                     <div class="alert alert-success text-center mb-4">
-                        <h3 class="alert-heading">Winner</h3>
+                        <h3 class="alert-heading">Current winner</h3>
                         {% for candidate in candidates %}
                             {% if candidate.id == winner_data.winner_id %}
                                 <h2 class="mb-2">{{ candidate.name }}</h2>
@@ -24,7 +24,6 @@
                         {% endfor %}
                     </div>
 
-                    <!-- Round-by-Round Results -->
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
                             <h4 class="mb-0">Round Breakdown</h4>
@@ -33,10 +32,10 @@
                             {% for round_counts in rounds %}
                             <div class="round-section mb-4">
                                 <h5 class="text-primary">Round {{ loop.index }}</h5>
-                                
+
                                 {% set round_total = round_counts.values()|sum %}
                                 {% set sorted_candidates = round_counts.items()|sort(attribute='1', reverse=True) %}
-                                
+
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead class="table-light">
@@ -136,7 +135,7 @@
 
                 <div class="text-center mt-4">
                     <a href="{{ url_for('voting.dashboard') }}" class="btn btn-primary">
-                        Back to Dashboard
+                        ← Back to Dashboard
                     </a>
                     <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
                         View on Blockchain
@@ -145,7 +144,6 @@
             </div>
         </div>
 
-        <!-- Election Information -->
         <div class="card mt-4">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">Election Information</h5>
