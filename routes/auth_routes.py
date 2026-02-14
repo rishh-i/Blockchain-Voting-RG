@@ -1,9 +1,41 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from models.user import User
 from database import db
+from flask_mail import Message
+from models.otp_verification import OTPVerification
+import secrets
+from datetime import datetime, timedelta, timezone
 
 auth_bp = Blueprint("auth", __name__)
+
+# helper function to generate six digit otp
+def generate_otp():
+    return str(secrets.randbelow(900000) + 100000)
+
+# helper function to send otp email
+def send_otp_email(email, otp_code):
+    from app import mail # this imports mail instance from app
+
+    msg = Message(subject="Login Verification Code",
+                  recipients=[email],
+                  body= f"""
+Hello,
+
+Your one time verification code is: {otp_code}
+
+This code will expire in 5 minutes.
+
+Best regards,
+Systems @ Rishi Gupta
+""")
+
+    try:
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -21,15 +53,125 @@ def login():
         user = User.query.filter_by(email=email).first() #sql query to find user by inputted email address
 
         if user and user.check_password(password):
-            login_user(user)
-            flash("Login successful", "success")
-            return redirect(url_for("voting.dashboard"))
+
+            # currently removes 2fa for admin but can be easily added back
+            if user.is_admin:
+                login_user(user)
+                flash("Login successful.", "success")
+                return redirect(url_for("voting.dashboard"))
+
+            # delete old otps and generate new
+            OTPVerification.cleanup_old_otps()
+            otp_code = generate_otp()
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+            # save otp to database
+            otp_record = OTPVerification(
+                email=email,
+                otp_code=otp_code,
+                expires_at=expires_at
+            )
+            db.session.add(otp_record)
+            db.session.commit()
+
+            # send otp email
+            if send_otp_email(email, otp_code):
+                session["pending_login_email"] = email
+                flash("Verification code sent to your email. Please check your inbox.", "success")
+                return redirect(url_for("auth.verify_otp"))
+            else:
+                flash("Failed to send verification code. Please try again.", "error")
+                return render_template("login.html")
         else:
             flash("Invalid credentials.", "error")
 
         return render_template("login.html")
 
     return render_template("login.html")
+
+@auth_bp.route("/verify-otp", methods=["GET"])
+def verify_otp():
+    if "pending_login_email" not in session:
+        flash("Please login to continue.", "error")
+        return redirect(url_for("auth.login"))
+
+    email = session["pending_login_email"]
+    # shows partial email for security
+    masked_email = email[:2] + "***@" + email.split('@')[1] if '@' in email else email
+
+    return render_template("verify_otp.html", masked_email=masked_email)
+
+@auth_bp.route("/verify-otp", methods=["POST"])
+def verify_otp_post():
+    if "pending_login_email" not in session:
+        flash("Please login to continue.", "error")
+        return redirect(url_for("auth.login"))
+
+    email = session["pending_login_email"]
+    entered_otp = request.form.get("otp_code", "").strip()
+
+    if not entered_otp:
+        flash("Please enter the verification code.", "error")
+        return redirect(url_for("auth.verify_otp"))
+
+    # finds the most recent otp record for the email
+    otp_record = OTPVerification.query.filter_by(
+        email=email,
+        is_verified=False
+    ).order_by(OTPVerification.created_at.desc()).first()
+
+    if not otp_record:
+        flash("Please request a new verification code.", "error")
+        return redirect(url_for("auth.login"))
+
+    if otp_record.is_expired():
+        flash("Verification code has expired. Please request a new one.", "error")
+        return redirect(url_for("auth.login"))
+
+    if otp_record.otp_code == entered_otp:
+        otp_record.is_verified = True
+        db.session.commit()
+
+        # now user will log in
+        user = User.query.filter_by(email=email).first()
+        if user:
+            login_user(user)
+            session.pop("pending_login_email", None) # removes pending login email from session
+            flash("Login successful.", "success")
+            return redirect(url_for("voting.dashboard"))
+        else:
+            flash("User not found.", "error")
+            return redirect(url_for("auth.login"))
+    else:
+        flash("Invalid verification code. Try again", "error")
+        return redirect(url_for("auth.verify_otp"))
+
+# route to resend otp code
+@auth_bp.route("/resend-otp", methods=["POST"])
+def resend_otp():
+    if "pending_login_email" not in session:
+        flash("Please login to continue.", "error")
+        return redirect(url_for("auth.login"))
+
+    email = session["pending_login_email"]
+    OTPVerification.cleanup_old_otps()
+    otp_code = generate_otp()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+    otp_record = OTPVerification(
+        email=email,
+        otp_code=otp_code,
+        expires_at=expires_at
+    )
+    db.session.add(otp_record)
+    db.session.commit()
+
+    if send_otp_email(email, otp_code):
+        flash("New verification code sent to your email.", "success")
+    else:
+        flash("Failed to send verification code. Please try again.", "error")
+
+    return redirect(url_for("auth.verify_otp"))
 
 from models.authorised_voter import AuthorisedVoter
 

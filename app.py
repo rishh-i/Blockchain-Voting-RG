@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
@@ -8,6 +9,7 @@ import os
 
 from database import db
 login_manager = LoginManager()
+mail = Mail()
 
 def create_app():
     app = Flask(__name__,
@@ -18,8 +20,17 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///voting.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    # email config for otps
+    app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+    app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
+    app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "True") == "True"
+    app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+    app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+    app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", os.environ.get("MAIL_USERNAME"))
+
     db.init_app(app)
     login_manager.init_app(app)
+    mail.init_app(app)
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Log in to access this page."
 
@@ -61,6 +72,7 @@ def create_app():
         from models.candidate import Candidate
         from models.vote_record import VoteRecord
         from models.authorised_voter import AuthorisedVoter
+        from models.otp_verification import OTPVerification
         # ide shows models are not used, but they are needed for db creation
 
         db.create_all()
