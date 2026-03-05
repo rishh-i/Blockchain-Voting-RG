@@ -1,11 +1,12 @@
 :root {
-    --bg-main: #EEF2F6;
+    --bg-main: #F7F7F8;
     --bg-card: #FFFFFF;
-    --bg-navbar: #111827;
+    --bg-navbar: #0D0D0D;
     --bg-button: #374151;
     --bg-hover: #1F2937;
-    --border-color: #E5E7EB;
-    --text-primary: #111827;
+    --border-color: #E5E5E5;
+    --border-accent: #9CA3AF;
+    --text-primary: #0D0D0D;
     --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
 }
@@ -20,7 +21,7 @@ body {
 .main-container {
     background: var(--bg-card) !important;
     border-radius: 15px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     margin: 20px auto;
     max-width: 1200px;
 }
@@ -37,11 +38,12 @@ body {
 }
 
 .nav-link:hover {
-    color: #E5E7EB !important;
-    background-color: var(--bg-hover) !important;
+    color: #E5E5E5 !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
     border-radius: 6px;
 }
 
+/* ── Buttons ── */
 .btn-primary {
     background: var(--bg-button) !important;
     border: none !important;
@@ -53,7 +55,7 @@ body {
 .btn-primary:focus {
     background: var(--bg-hover) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 .btn-success {
@@ -66,7 +68,7 @@ body {
 .btn-success:focus {
     background: var(--bg-hover) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary {
@@ -111,16 +113,17 @@ body {
     background: var(--bg-hover) !important;
 }
 
+/* ── Cards ── */
 .card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
 }
 
 .card:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
 }
 
@@ -160,17 +163,20 @@ body {
     color: var(--text-primary) !important;
 }
 
+/* Election sub-cards — visible charcoal accent border */
 .card.border-primary {
-    border: 2px solid var(--bg-button) !important;
+    border: 2px solid var(--border-accent) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
 .card.border-success {
-    border: 2px solid var(--bg-button) !important;
+    border: 2px solid var(--border-accent) !important;
 }
 
+/* ── Forms ── */
 .form-control,
 .form-select {
-    border: 2px solid var(--border-color) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 8px;
     padding: 12px;
     background: var(--bg-card) !important;
@@ -193,20 +199,21 @@ body {
     color: var(--text-secondary);
 }
 
+/* ── Alerts ── */
 .alert {
     border-radius: 10px;
     border: 1px solid var(--border-color);
 }
 
 .alert-info {
-    background: #EFF6FF !important;
-    border-color: #BFDBFE !important;
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
     color: var(--text-primary) !important;
 }
 
 .alert-success {
-    background: #F0FDF4 !important;
-    border-color: #BBF7D0 !important;
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
     color: var(--text-primary) !important;
 }
 
@@ -228,6 +235,7 @@ body {
     color: var(--text-primary) !important;
 }
 
+/* ── Tables ── */
 .table {
     color: var(--text-primary);
 }
@@ -246,25 +254,26 @@ body {
 }
 
 .table-success {
-    background-color: #F0FDF4 !important;
+    background-color: #F3F4F6 !important;
 }
 
 .table-danger {
     background-color: #FEF2F2 !important;
 }
 
+/* ── Badges ── */
 .badge.bg-primary,
 .badge.bg-info {
     background: var(--bg-button) !important;
 }
 
 .badge.bg-success {
-    background: #10B981 !important;
+    background: #374151 !important;
 }
 
 .badge.bg-warning {
     background: #F59E0B !important;
-    color: var(--text-primary) !important;
+    color: #FFFFFF !important;
 }
 
 .badge.bg-danger {
@@ -282,8 +291,10 @@ body {
 .badge.bg-light {
     background: var(--bg-main) !important;
     color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
+/* ── Progress ── */
 .progress {
     background-color: var(--bg-main) !important;
     border: 1px solid var(--border-color);
@@ -294,9 +305,10 @@ body {
 }
 
 .progress-bar.bg-success {
-    background-color: #10B981 !important;
+    background-color: var(--bg-button) !important;
 }
 
+/* ── Text colours ── */
 .text-primary {
     color: var(--text-primary) !important;
 }
@@ -310,7 +322,7 @@ body {
 }
 
 .text-success {
-    color: #10B981 !important;
+    color: var(--bg-button) !important;
 }
 
 .text-danger {
@@ -325,17 +337,19 @@ body {
     color: var(--bg-button) !important;
 }
 
+/* ── Borders ── */
 .border,
 .border-primary,
 .border-secondary {
     border-color: var(--border-color) !important;
 }
 
+/* ── Blockchain explorer ── */
 .block-card {
     border: 1px solid var(--border-color) !important;
     border-radius: 12px;
     background: var(--bg-card) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .btn-validate {
@@ -372,7 +386,7 @@ body {
 
 .hash-display {
     background: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 8px;
     color: var(--text-secondary);
 }
@@ -384,9 +398,9 @@ body {
 }
 
 .validation-success {
-    background: #F0FDF4 !important;
-    color: #10B981 !important;
-    border: 1px solid #BBF7D0 !important;
+    background: #F3F4F6 !important;
+    color: var(--bg-button) !important;
+    border: 1px solid #D1D5DB !important;
 }
 
 .validation-error {
@@ -399,6 +413,7 @@ body {
     background: #6B7280 !important;
 }
 
+/* ── Voting / candidate cards ── */
 .candidate-card {
     border: 2px solid var(--border-color) !important;
     background: var(--bg-card) !important;
@@ -410,26 +425,28 @@ body {
 }
 
 .candidate-card.selected {
-    border-color: #10B981 !important;
-    background-color: #F0FDF4 !important;
+    border-color: var(--bg-button) !important;
+    background-color: #F3F4F6 !important;
 }
 
 .candidate-card.in-ranking {
-    border-color: #10B981 !important;
-    background-color: #F0FDF4 !important;
+    border-color: var(--bg-button) !important;
+    background-color: #F3F4F6 !important;
 }
 
 .ranking-position {
-    background: #10B981 !important;
+    background: var(--bg-button) !important;
 }
 
+/* ── Login / Register containers ── */
 .login-container,
 .register-container {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
 }
 
+/* ── Bootstrap bg overrides ── */
 .bg-primary {
     background: var(--bg-button) !important;
 }
@@ -439,7 +456,7 @@ body {
 }
 
 .bg-success {
-    background: #10B981 !important;
+    background: var(--bg-button) !important;
 }
 
 .bg-info {
@@ -454,6 +471,7 @@ body {
     background: var(--bg-navbar) !important;
 }
 
+/* ── Misc ── */
 .loading-spinner {
     border: 3px solid var(--border-color);
     border-top: 3px solid var(--bg-button);

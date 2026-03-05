@@ -3,6 +3,21 @@
 {% block title %}Dashboard - Blockchain Voting System{% endblock %}
 
 {% block content %}
+<style>
+    .election-card {
+        border: 2px solid #9CA3AF !important;
+        border-radius: 12px;
+        background: #FFFFFF;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    .election-card:hover {
+        border-color: #374151 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+</style>
+
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,7 +36,7 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="mb-0">Active Elections</h4>
             </div>
             <div class="card-body">
@@ -29,27 +44,25 @@
                     <div class="row">
                         {% for election in available_elections %}
                         <div class="col-md-6 mb-3">
-                            <div class="card border-primary">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title text-primary mb-0">{{ election.name }}</h5>
-                                        <span class="badge bg-primary">ID: {{ election.id }}</span>
-                                    </div>
-                                    <p class="card-text">
-                                        <small class="text-muted">
-                                            <strong>Started:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}
-                                            {% if election.end_date %}
-                                                <br><strong>Ends:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
-                                            {% else %}
-                                                <br><strong>Ends:</strong> No end date set
-                                            {% endif %}
-                                        </small>
-                                    </p>
-                                    <a href="{{ url_for('voting.voting_page', election_id=election.id) }}"
-                                       class="btn btn-primary">Vote Now</a>
-                                    <a href="{{ url_for('voting.results', election_id=election.id) }}"
-                                       class="btn btn-outline-primary">View Results</a>
+                            <div class="election-card p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title fw-bold mb-0" style="color: #0D0D0D;">{{ election.name }}</h5>
+                                    <span class="badge bg-primary">ID: {{ election.id }}</span>
                                 </div>
+                                <p class="mb-3">
+                                    <small class="text-muted">
+                                        <strong>Started:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                        {% if election.end_date %}
+                                            <br><strong>Ends:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                                        {% else %}
+                                            <br><strong>Ends:</strong> No end date set
+                                        {% endif %}
+                                    </small>
+                                </p>
+                                <a href="{{ url_for('voting.voting_page', election_id=election.id) }}"
+                                   class="btn btn-primary btn-sm me-1">Vote Now</a>
+                                <a href="{{ url_for('voting.results', election_id=election.id) }}"
+                                   class="btn btn-outline-primary btn-sm">View Results</a>
                             </div>
                         </div>
                         {% endfor %}
@@ -67,7 +80,7 @@
 
     <div class="col-lg-4">
         <div class="card mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header">
                 <h5 class="mb-0">General Info</h5>
             </div>
             <div class="card-body">
@@ -77,7 +90,7 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Available to Vote:</span>
-                    <span class="fw-bold text-success">{{ available_elections|length }}</span>
+                    <span class="fw-bold">{{ available_elections|length }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span>Your Voter ID:</span>
@@ -87,7 +100,7 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
+            <div class="card-header">
                 <h5 class="mb-0">Blockchain Explorer</h5>
             </div>
             <div class="card-body text-center">
@@ -107,9 +120,9 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h5 class="mb-0">All Active Elections</h5>
-        </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -138,7 +151,7 @@
                                 </td>
                                 <td>
                                     {% if election in available_elections %}
-                                        <span class="badge bg-success">Available</span>
+                                        <span class="badge bg-primary">Available</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Already Voted</span>
                                     {% endif %}
@@ -166,7 +179,7 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-secondary text-white">
+            <div class="card-header">
                 <h5 class="mb-0">Past Elections</h5>
             </div>
             <div class="card-body">
@@ -193,7 +206,7 @@
                                     {% if election in available_elections %}
                                         <span class="badge bg-warning">Didn't Vote</span>
                                     {% else %}
-                                        <span class="badge bg-success">Voted</span>
+                                        <span class="badge bg-secondary">Voted</span>
                                     {% endif %}
                                 </td>
                                 <td>
