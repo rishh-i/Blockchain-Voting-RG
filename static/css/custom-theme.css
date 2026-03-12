@@ -43,7 +43,6 @@ body {
     border-radius: 6px;
 }
 
-/* ── Buttons ── */
 .btn-primary {
     background: var(--bg-button) !important;
     border: none !important;
@@ -113,7 +112,6 @@ body {
     background: var(--bg-hover) !important;
 }
 
-/* ── Cards ── */
 .card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color) !important;
@@ -163,7 +161,6 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* Election sub-cards — visible charcoal accent border */
 .card.border-primary {
     border: 2px solid var(--border-accent) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
@@ -173,7 +170,6 @@ body {
     border: 2px solid var(--border-accent) !important;
 }
 
-/* ── Forms ── */
 .form-control,
 .form-select {
     border: 1px solid var(--border-color) !important;
@@ -199,7 +195,6 @@ body {
     color: var(--text-secondary);
 }
 
-/* ── Alerts ── */
 .alert {
     border-radius: 10px;
     border: 1px solid var(--border-color);
@@ -235,7 +230,6 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* ── Tables ── */
 .table {
     color: var(--text-primary);
 }
@@ -261,7 +255,6 @@ body {
     background-color: #FEF2F2 !important;
 }
 
-/* ── Badges ── */
 .badge.bg-primary,
 .badge.bg-info {
     background: var(--bg-button) !important;
@@ -294,7 +287,6 @@ body {
     border: 1px solid var(--border-color) !important;
 }
 
-/* ── Progress ── */
 .progress {
     background-color: var(--bg-main) !important;
     border: 1px solid var(--border-color);
@@ -308,7 +300,6 @@ body {
     background-color: var(--bg-button) !important;
 }
 
-/* ── Text colours ── */
 .text-primary {
     color: var(--text-primary) !important;
 }
@@ -337,19 +328,18 @@ body {
     color: var(--bg-button) !important;
 }
 
-/* ── Borders ── */
 .border,
 .border-primary,
 .border-secondary {
     border-color: var(--border-color) !important;
 }
 
-/* ── Blockchain explorer ── */
 .block-card {
-    border: 1px solid var(--border-color) !important;
+    border: 2px solid var(--border-accent) !important;
     border-radius: 12px;
     background: var(--bg-card) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
 }
 
 .btn-validate {
@@ -393,8 +383,10 @@ body {
 
 .validation-section {
     background: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
+    border: 2px solid var(--border-accent) !important;
     border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
 }
 
 .validation-success {
@@ -413,7 +405,6 @@ body {
     background: #6B7280 !important;
 }
 
-/* ── Voting / candidate cards ── */
 .candidate-card {
     border: 2px solid var(--border-color) !important;
     background: var(--bg-card) !important;
@@ -438,7 +429,6 @@ body {
     background: var(--bg-button) !important;
 }
 
-/* ── Login / Register containers ── */
 .login-container,
 .register-container {
     background: var(--bg-card) !important;
@@ -446,7 +436,6 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* ── Bootstrap bg overrides ── */
 .bg-primary {
     background: var(--bg-button) !important;
 }
@@ -471,7 +460,6 @@ body {
     background: var(--bg-navbar) !important;
 }
 
-/* ── Misc ── */
 .loading-spinner {
     border: 3px solid var(--border-color);
     border-top: 3px solid var(--bg-button);
@@ -485,4 +473,20 @@ body {
     .card {
         margin-bottom: 15px;
     }
+}
+
+.card.border-info {
+    border: 2px solid var(--border-accent) !important;
+}
+
+.card.border-warning {
+    border: 2px solid var(--border-accent) !important;
+}
+
+.card.border-danger {
+    border: 2px solid #FECACA !important;
+}
+
+.card.border-success {
+    border: 2px solid var(--border-accent) !important;
 }

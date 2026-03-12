@@ -44,22 +44,6 @@
     <div id="validationResult"></div>
 </div>
 
-<div class="mb-4">
-    <div class="card border-primary">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Blockchain Status</h4>
-        </div>
-        <div class="card-body">
-            <div id="blockchainStatus">
-                <div class="d-flex align-items-center">
-                    <span class="loading-spinner me-2"></span>
-                    Loading blockchain status...
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="card border-secondary">
     <div class="card-header bg-secondary text-white">
         <h4 class="mb-0">Blocks</h4>
@@ -88,62 +72,12 @@
             const response = await fetch('/blockchain/api/chain');
             const data = await response.json();
             blockchainData = data;
-            displayBlockchainStatus(data);
             displayBlocks(data.chain);
         } catch (error) {
             console.error('Error loading blockchain data:', error);
-            document.getElementById('blockchainStatus').innerHTML =
-                '<div class="alert alert-danger">Error loading blockchain data</div>';
             document.getElementById('blocksContainer').innerHTML =
                 '<div class="alert alert-danger">Error loading blocks</div>';
         }
-    }
-
-    function displayBlockchainStatus(data) {
-        const totalVotes = getTotalVoteCount(data.chain);
-        const statusHtml = `
-            <div class="row text-center">
-                <div class="col-md-3 mb-3">
-                    <div class="card border-primary">
-                        <div class="card-body">
-                            <h4 class="text-primary">${data.length}</h4>
-                            <small class="text-muted fw-bold">Total Blocks</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card border-info">
-                        <div class="card-body">
-                            <h4 class="text-info">${totalVotes}</h4>
-                            <small class="text-muted fw-bold">Total Votes</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card border-${data.is_valid ? 'success' : 'danger'}">
-                        <div class="card-body">
-                            <span class="badge ${data.is_valid ? 'bg-success' : 'bg-danger'} p-2">
-                                ${data.is_valid ? '✓ Valid' : '✗ Invalid'}
-                            </span>
-                            <br><small class="text-muted fw-bold">Chain Status</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card border-warning">
-                        <div class="card-body">
-                            <h4 class="text-warning">${data.chain.filter(block => block.votes.length === 0).length}</h4>
-                            <small class="text-muted fw-bold">Empty Blocks</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.getElementById('blockchainStatus').innerHTML = statusHtml;
-    }
-
-    function getTotalVoteCount(chain) {
-        return chain.reduce((total, block) => total + block.votes.length, 0);
     }
 
     function displayBlocks(chain) {

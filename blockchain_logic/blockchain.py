@@ -14,7 +14,6 @@ class Blockchain:
         self.block_size = 1 # a new block is created/mined for every vote
         self.vote_registry = HashTable() # Hash table to store votes
         self.chain_lock = Lock()  # ensures only one thread can modify the chain at a time so prevents duplicate votes
-        self.create_genesis_block()
 
         self.load_blockchain() # loads existing bc file
 

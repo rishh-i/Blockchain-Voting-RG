@@ -19,7 +19,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <h5 class="mb-1 {% if loop.first %}text-success{% endif %}">
-                                            {% if loop.first %}🏆 {% endif %} {{ result.candidate.name }}
+                                            {% if loop.first %}{% endif %} {{ result.candidate.name }}
                                         </h5>
                                         {% if result.candidate.party %}
                                             <small class="text-muted">{{ result.candidate.party }}</small>
@@ -98,7 +98,7 @@
                                                 {% for result in results %}
                                                 <tr {% if loop.first %}class="table-success"{% endif %}>
                                                     <td class="fw-bold">
-                                                        {% if loop.first %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                                                        {% if loop.first %}1{% elif loop.index == 2 %}2{% elif loop.index == 3 %}3{% else %}{{ loop.index }}{% endif %}
                                                     </td>
                                                     <td>
                                                         <div class="fw-bold">{{ result.candidate.name }}</div>
