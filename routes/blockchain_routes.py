@@ -35,10 +35,10 @@ def get_chain():
             anonymous_votes = []
             for vote in block["votes"]:
                 anonymous_vote = {
+                    "voter_id": vote["voter_id"],
                     "election_id": vote["election_id"],
                     "timestamp": vote["timestamp"],
                     "vote_hash": vote["vote_hash"],
-                    "voter_id_hidden": True
                 }
                 # handles different vote types (can be done by this function or the code commented below)
                 candidate_id = handle_different_vote_types_dict(vote)
@@ -73,10 +73,10 @@ def get_block(block_index):
             anonymous_votes = []
             for vote in block_data["votes"]:
                 anonymous_vote = {
+                    "voter_id": vote["voter_id"],
                     "election_id": vote["election_id"],
                     "timestamp": vote["timestamp"],
                     "vote_hash": vote["vote_hash"],
-                    "voter_id_hidden": True
                 }
                 # refer to get_chain for explanation
                 candidate_id = handle_different_vote_types_dict(vote)
