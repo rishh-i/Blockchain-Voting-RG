@@ -101,11 +101,11 @@ def validate_vote():
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        voter_id = data.get("voter_id")
+        voter_id = current_user.voter_id # this ensures user cannot change and check someone else's vote
         election_id = data.get("election_id")
 
-        if not voter_id or not election_id:
-            return jsonify({"error": "Voter ID and Election ID are required"}), 400
+        if not election_id:
+            return jsonify({"error": "Election ID are required"}), 400
 
         if not current_user.is_admin and voter_id != current_user.voter_id:
             return jsonify({"error": "Unauthorised access"}), 403
