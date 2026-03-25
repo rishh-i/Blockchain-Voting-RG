@@ -44,11 +44,6 @@ def get_chain():
                 candidate_id = handle_different_vote_types_dict(vote)
                 anonymous_vote.update(candidate_id)
 
-                # if "candidate_id" in vote:
-                #     anonymous_vote["candidate_id"] = vote["candidate_id"]
-                # elif "ranked_candidate_ids" in vote:
-                #     anonymous_vote["ranked_candidate_ids"] = vote["ranked_candidate_ids"]
-
                 anonymous_votes.append(anonymous_vote)
             anonymous_block["votes"] = anonymous_votes
             anonymous_chain.append(anonymous_block)

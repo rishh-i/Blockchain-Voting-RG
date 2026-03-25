@@ -33,7 +33,6 @@ class Blockchain:
         """
 
         with self.chain_lock:
-            #print(f"DEBUG: Adding vote voter_id: {vote.voter_id}, election_id: {vote.election_id}, candidate_id: {vote.candidate_id}")
 
             if not vote.is_valid():
                 # is_valid is a method from the Vote class which checks hash of block
@@ -50,13 +49,13 @@ class Blockchain:
             self.pending_votes.append(vote)
 
             self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote  # stores the vote in the hash table
-            print(f"DEBUG: Vote added to hash table")
+            print(f"Vote added to hash table")
 
             if len(self.pending_votes) >= self.block_size:
-                print("DEBUG: Max block size reached, creating new block")
+                print("Max block size reached, creating new block")
                 self.__add_pending_votes()
             else:
-                print(f"DEBUG: Block size not reached ({len(self.pending_votes)}/{self.block_size})")
+                print(f"Block size not reached ({len(self.pending_votes)}/{self.block_size})")
 
     def __multiple_votes(self, vote):
         """
@@ -139,16 +138,16 @@ class Blockchain:
             }
             with open(self.blockchain_file, 'w') as file:
                 json.dump(blockchain_data, file, indent=2)
-            print(f"DEBUG: Blockchain saved to {self.blockchain_file}")
+            print(f"Blockchain saved to {self.blockchain_file}")
         except Exception as e:
-            print(f"DEBUG: Error in saving blockchain: {str(e)}")
+            print(f"Error in saving blockchain: {str(e)}")
 
     def load_blockchain(self):
         # loads the blockchain from a json file
         # used to maintain persistance when program ends and runs
         try:
             if os.path.exists(self.blockchain_file):
-                print(f"DEBUG: Loading blockchain from {self.blockchain_file}")
+                print(f"Loading blockchain from {self.blockchain_file}")
 
                 with open(self.blockchain_file, 'r') as file:
                     blockchain_data = json.load(file)
@@ -178,11 +177,11 @@ class Blockchain:
                     vote = VoteBuilder.from_dict(vote_data)
                     self.pending_votes.append(vote)
                     self.vote_registry[f"{vote.voter_id}_{vote.election_id}"] = vote
-                print(f"DEBUG: Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes not yet mined/added.")
+                print(f"Loaded {len(self.chain)} blocks and {len(self.pending_votes)} pending votes not yet mined/added.")
 
                 #validate the loaded blockchain
                 if not self.validate_chain():
-                    print("DEBUG: Loaded blockchain is invalid so creating new genesis block")
+                    print("Loaded blockchain is invalid so creating new genesis block")
                     self.chain = []
                     self.pending_votes = []
                     self.vote_registry = HashTable()
@@ -190,13 +189,12 @@ class Blockchain:
                     self.save_blockchain()
 
             else:
-                print(f"DEBUG: No blockchain file found so creating new genesis block")
                 self.create_genesis_block()
                 self.save_blockchain()
 
         except Exception as e:
             print(f"ERROR: Failed to load blockchain: {str(e)}")
-            print("DEBUG: Creating new genesis block")
+            print("Creating new genesis block")
             self.chain = []
             self.pending_votes = []
             self.vote_registry = HashTable()

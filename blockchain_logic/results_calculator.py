@@ -146,35 +146,32 @@ class RankedResultsCalculator(AbstractResultsCalculator):
         eliminated = set()
 
         while True:
-            # count current round
             round_counts = self._count_current_round(active_votes, eliminated)
             total_votes = sum(round_counts.values())
 
             rounds.append(round_counts.copy())
 
-            # checks for majority
-            if round_counts:
-                max_votes = max(round_counts.values())
-                if max_votes > total_votes / 2:
-                    # majority achieved
-                    break
-
-                #majority not achieved so eliminate candidate with least votes
-                min_votes = min(round_counts.values())
-
-                candidates_to_eliminate = [] # again could also use list comprehension
-                for candidate_id, votes in round_counts.items():
-                    if votes == min_votes:
-                        candidates_to_eliminate.append(candidate_id)
-
-                eliminated.add(candidates_to_eliminate[0])
-
-                # checks if only one candidate remains
-                if len(round_counts) - len(eliminated) <= 1:
-                    break
-
-            else:
+            # ends if no votes remain
+            if not round_counts:
                 break
+
+            # ends if only one candidate remains
+            if len(round_counts) <= 1:
+                break
+
+            # checks for majority
+            max_votes = max(round_counts.values())
+            if max_votes > total_votes / 2:
+                break
+
+            #majority not achieved so eliminate candidate with least votes
+            min_votes = min(round_counts.values())
+            candidates_to_eliminate = [] # again could also use list comprehension
+            for candidate_id, votes in round_counts.items():
+                if votes == min_votes:
+                    candidates_to_eliminate.append(candidate_id)
+
+            eliminated.add(candidates_to_eliminate[0])
 
         return {"rounds": rounds, "final_counts": rounds[-1] if rounds else {}}
 

@@ -4,7 +4,6 @@ from models.user import User
 from models.election import Election
 from models.candidate import Candidate
 from models.vote_record import VoteRecord
-#from blockchain_logic.vote import Vote
 from blockchain_logic.vote_builder import VoteBuilder
 from blockchain_logic.results_calculator import ResultsCalculator
 from database import db
@@ -158,29 +157,27 @@ def submit_vote():
             flash("Unkown election type.", "error")
             return redirect(url_for("voting.dashboard"))
 
-        print("DEBUG: Adding vote to blockchain")
         current_app.blockchain.add_vote(bc_vote) #adds vote to blockchain
-        print("DEBUG: Vote successfully added to blockchain")
+        print("Vote successfully added to blockchain")
 
-        print("DEBUG: Creating vote record")
         vote_record = VoteRecord(
             voter_id=current_user.voter_id,
             election_id=election_id
         )
         db.session.add(vote_record)  # adds vote to database
         db.session.commit()
-        print("DEBUG: Vote record created successfully")
+        print("Vote record created successfully")
 
         flash(f"Vote submitted", "success")
 
     except ValueError as e:
-        print(f"DEBUG: ValueError occured: {str(e)}")
+        print(f"ValueError occured: {str(e)}")
         flash(f"Vote submission failed: {str(e)}", "error")
         return redirect(url_for("voting.voting_page", election_id=election_id))
 
     except Exception as e:
-        print(f"DEBUG: Exception occured: {str(e)}")
-        print(f"DEBUG: Exception type: {type(e)}")
+        print(f"Exception occured: {str(e)}")
+        print(f"Exception type: {type(e)}")
         db.session.rollback()
         flash("An error occurred while submitting your vote", "error")
         return redirect(url_for("voting.voting_page", election_id=election_id))
@@ -385,7 +382,6 @@ def add_candidate(election_id):
 @voting_bp.route("/debug/blockchain")
 @login_required
 def debug_blockchain():
-    # this route is a debugging tool for the admin (possibly remove later)
     # shows blockchain data (the blockchain.json file)
     if not current_user.is_admin:
         return "Admin only", 403
