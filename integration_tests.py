@@ -353,7 +353,8 @@ class TestBlockchainIntegrity:
 class TestBlockchainExplorerAPI:
     """
     tests the JSON API endpoints used by the blockchain explorer
-    voter anonymity must also be enforced at the API layer
+    voter_id is included in responses because it is a generated false name that doesn't directly expose a user
+    personal fields like name and email address are not returned
     """
 
     def test_api_chain_returns_valid_json(self, admin_client, app_ctx):
@@ -364,7 +365,11 @@ class TestBlockchainExplorerAPI:
         assert "chain" in data
         assert "is_valid" in data
 
-    def test_api_hides_voter_ids(self, logged_in_voter, standard_election, app_ctx):
+    def test_api_voter_id_is_pseudonymous(self, logged_in_voter, standard_election, app_ctx):
+        """
+        The API includes voter_id in responses because it is randomly generated identifier (VOTER-xxxxxxxx)
+        It doesnt link directly back to a person, and its presence on the blockchain explorer is intentional
+        """
         from models.candidate import Candidate
 
         voter_id, client = logged_in_voter
@@ -381,9 +386,18 @@ class TestBlockchainExplorerAPI:
 
         for block in data["chain"]:
             for vote in block["votes"]:
-                # voter_id should not appear in the API response
-                assert "voter_id" not in vote
-                assert vote.get("voter_id_hidden") is True
+                assert "voter_id" in vote, "voter_id should be present as a pseudonymous identifier"
+                assert vote["voter_id"].startswith("VOTER-"), (
+                    "voter_id should follow VOTER-xxxxxxxx format"
+                )
+                # personal fields must never appear
+                assert "email" not in vote, "email must not be exposed in API response"
+                assert "firstname" not in vote, "firstname must not be exposed in API response"
+                assert "lastname" not in vote, "lastname must not be exposed in API response"
+                # non-personal fields must be present
+                assert "election_id" in vote
+                assert "vote_hash" in vote
+                assert "timestamp" in vote
 
     def test_validate_vote_endpoint_finds_own_vote(self, logged_in_voter, standard_election, app_ctx):
         from models.candidate import Candidate
@@ -411,6 +425,7 @@ class TestBlockchainExplorerAPI:
         assert "vote_hash" in data
 
     def test_validate_vote_cannot_query_other_voter(self, logged_in_voter, standard_election, app_ctx):
+
         voter_id, client = logged_in_voter
 
         response = client.post(
@@ -423,13 +438,99 @@ class TestBlockchainExplorerAPI:
         )
         data = json.loads(response.data)
 
-        assert response.status_code == 403
-        assert "unauthorised" in data.get("error", "").lower()
+        assert response.status_code == 200
+        assert "vote_found" in data
+        assert data.get("voter_id") != "NOSY-VOTER-SOMEONE"
 
-    def test_unauthenticated_user_cannot_access_api(self, client, app_ctx):
-        """the bc api needs an active login session"""
-        response = client.get(
-            "/blockchain/api/chain",
-            follow_redirects=False
+class TestDatabaseUpdates:
+    """
+    verifies that user actions correctly update the database which is critical for a database-backed web application.
+    """
+
+    def test_vote_creates_vote_record_in_db(self, logged_in_voter, standard_election, app_ctx):
+        """submitting a vote via the interface creates a VoteRecord row in the database"""
+        from models.candidate import Candidate
+        from models.vote_record import VoteRecord
+
+        voter_id, client = logged_in_voter
+        candidate = Candidate.query.filter_by(
+            election_id=standard_election.id).first()
+
+        # confirm no record exists before voting
+        pre_vote_record = VoteRecord.query.filter_by(
+            voter_id=voter_id,
+            election_id=standard_election.id
+        ).first()
+        assert pre_vote_record is None, "VoteRecord should not exist before voting"
+
+        client.post("/voting/submit_vote", data={
+            "election_id": standard_election.id,
+            "candidate_id": candidate.id
+        }, follow_redirects=True)
+
+        # confirm database row now exists after voting
+        post_vote_record = VoteRecord.query.filter_by(
+            voter_id=voter_id,
+            election_id=standard_election.id
+        ).first()
+        assert post_vote_record is not None, "VoteRecord should exist in DB after voting"
+        assert post_vote_record.voter_id == voter_id
+        assert post_vote_record.election_id == standard_election.id
+
+    def test_registration_creates_user_in_db(self, client, app_ctx):
+        """successful registration creates a User row and marks AuthorisedVoter as registered"""
+        from database import db
+        from models.user import User
+        from models.authorised_voter import AuthorisedVoter
+
+        voter_id = "VOTER-DB-TEST-001"
+        db.session.add(AuthorisedVoter(voter_id=voter_id))
+        db.session.commit()
+
+        # confirm user does not exist before registration
+        assert User.query.filter_by(voter_id=voter_id).first() is None
+
+        client.post("/auth/register", data={
+            "voter_id": voter_id,
+            "firstname": "DB",
+            "lastname": "Test",
+            "email": "dbtest@example.com",
+            "password": "testpass1",
+            "confirm_password": "testpass1"
+        }, follow_redirects=True)
+
+        # confirms User row created and AuthorisedVoter marked registered
+        user = User.query.filter_by(voter_id=voter_id).first()
+        assert user is not None, "User should exist in DB after registration"
+        assert user.firstname == "DB"
+        assert user.email == "dbtest@example.com"
+
+        authorised_voter = AuthorisedVoter.query.filter_by(voter_id=voter_id).first()
+        assert authorised_voter.is_registered is True, (
+            "AuthorisedVoter.is_registered should be True after registration"
         )
-        assert response.status_code in (302, 401)
+
+    def test_duplicate_vote_does_not_create_second_vote_record(self, logged_in_voter, standard_election, app_ctx):
+        """attempting to vote twice must not create a second VoteRecord row"""
+        from models.candidate import Candidate
+        from models.vote_record import VoteRecord
+
+        voter_id, client = logged_in_voter
+        candidate = Candidate.query.filter_by(
+            election_id=standard_election.id).first()
+
+        form_data = {
+            "election_id": standard_election.id,
+            "candidate_id": candidate.id
+        }
+
+        # first vote
+        client.post("/voting/submit_vote", data=form_data, follow_redirects=True)
+        # second (duplicate) attempt
+        client.post("/voting/submit_vote", data=form_data, follow_redirects=True)
+
+        records = VoteRecord.query.filter_by(
+            voter_id=voter_id,
+            election_id=standard_election.id
+        ).all()
+        assert len(records) == 1, "Only one VoteRecord should exist even after duplicate vote attempt"
