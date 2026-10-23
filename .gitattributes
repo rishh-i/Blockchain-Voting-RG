@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+templates/*.html linguist-vendored
+templates/base.html -linguist-vendored
+templates/dashboard.html -linguist-vendored
+templates/results.html -linguist-vendored
+templates/login.html -linguist-vendored
+templates/vote.html -linguist-vendored
